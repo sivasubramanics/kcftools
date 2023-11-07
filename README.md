@@ -1,5 +1,5 @@
 # kcftools
-This repository holds scripts that can be used to detect introgressions form the resequencing data
+This repository holds scripts that can be used to detect introgressions from the resequencing data
 
 ## detect variations
 ### IBSpy_call_variations.sh
