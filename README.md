@@ -5,7 +5,8 @@ This repository holds scripts that can be used to detect introgressions form the
 ### IBSpy_call_variations.sh
 shell script can be used to run the fastq->kmer_variants using the KMC and IBSpy pipeline. Before running the pipeline, make sure the dependencies are installed and added to the env path
 
-`Usage: IBSpy_call_variation.sh [-h] [-f fq.list] [-F fq_list] [-r ref.fa] [-o output] [-p threads] [-k kmer_size] [-w window_size]
+```shell
+Usage: IBSpy_call_variation.sh [-h] [-f fq.list] [-F fq_list] [-r ref.fa] [-o output] [-p threads] [-k kmer_size] [-w window_size]
 Options:
   -f STR    list of fastq files
   -F STR    format (fq/fq_list/fa/fa_list/)
@@ -15,7 +16,7 @@ Options:
   -k INT    kmer size
   -w INT    window size
   -h        help
-  `
+```
 
 #### dependencies
 [KMC](https://github.com/refresh-bio/KMC)  
@@ -24,7 +25,8 @@ Options:
 
 ## kcftools 
 
-`usage: kcftools.py [-h] {tsv2kcf,cohort,increase_window,find_IBS,extract,kcf2bedgraph,kcf2matrix,split_kcf,concat} ...
+```shell
+usage: kcftools.py [-h] {tsv2kcf,cohort,increase_window,find_IBS,extract,kcf2bedgraph,kcf2matrix,split_kcf,concat} ...
 
 positional arguments:
   {tsv2kcf,cohort,increase_window,find_IBS,extract,kcf2bedgraph,kcf2matrix,split_kcf,concat}
@@ -40,7 +42,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  `
+```
 
 ### tsv2kcf 
 inputs: single TSV file  
