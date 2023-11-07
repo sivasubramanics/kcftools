@@ -1,7 +1,7 @@
 # kcftools
 This repository holds scripts that can be used to detect introgressions form the resequencing data
 
-## detec variations
+## detect variations
 ### IBSpy_call_variations.sh
 shell script can be used to run the fastq->kmer_variants using the KMC and IBSpy pipeline. Before running the pipeline, make sure the dependencies are installed and added to the env path
 
