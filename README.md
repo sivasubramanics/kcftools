@@ -7,8 +7,11 @@ shell script can be used to run the fastq->kmer_variants using the KMC and IBSpy
 
 #### dependencies
 [KMC](https://github.com/refresh-bio/KMC)
+
 [kmerGWAS](https://github.com/voichek/kmersGWAS)
+
 [IBSpy_cpp](https://github.com/Uauy-Lab/IBSpy)
+
 
 ## kcftools 
 
