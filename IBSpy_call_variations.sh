@@ -86,10 +86,14 @@ else
     exit 1
 fi
 
+# please replace the binary PATH for these variables
+KMER_STRAND_ADD_BIN="$TOOLS_PATH/kmersGWAS/bin/kmers_add_strand_information"
+IBSCPP_BIN="$TOOLS_PATH/IBSpy/IBScpp/build/IBScpp"
+
 # check if the kmersGWAS tools are installed
 print_log "Checking tools"
 check_exec kmc 
-check_exec $TOOLS_PATH/kmersGWAS/bin/kmers_add_strand_information
+check_exec $KMER_STRAND_ADD_BIN
 
 # pipeline begins here
 print_log "Creating output directory $output"
@@ -102,10 +106,10 @@ print_log "KMC no canonized counting (all k-mers)"
 run_cmd "kmc -k$kmer_size -t$threads -ci0 -b ${in_cmd} $output/all $output" > $output/kmc.all.log 2>&1
 
 print_log "Adding strand information"
-run_cmd "$TOOLS_PATH/kmersGWAS/bin/kmers_add_strand_information -c $output/canon -n $output/all -k $kmer_size -o $output/kmc31" > $output/kmers_add_strand_information.log 2>&1
+run_cmd "$KMER_STRAND_ADD_BIN -c $output/canon -n $output/all -k $kmer_size -o $output/kmc31" > $output/kmers_add_strand_information.log 2>&1
 
 print_log "IBScpp variant calling"
-run_cmd "$TOOLS_PATH/IBSpy/IBScpp/build/IBScpp -d $output/kmc31 -r $ref -p $threads -k $kmer_size -w $window_size > $output/variations.tsv" > $output/IBScpp.variations.log 2>&1
+run_cmd "$IBSCPP_BIN -d $output/kmc31 -r $ref -p $threads -k $kmer_size -w $window_size > $output/variations.tsv" > $output/IBScpp.variations.log 2>&1
 
 # stop clock
 end=$(date +%s)
