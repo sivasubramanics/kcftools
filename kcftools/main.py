@@ -21,12 +21,13 @@ def main():
     # parse arguments for the "run_ibspy" command
     get_kmers = subparsers.add_parser('get_kmers', help='Run KMC for fasta or fastq files and generate a kmc database')
     get_kmers.add_argument('-i', '--input', help='fasta or fastq file(s)', type=str, nargs='+', required=False)
-    get_kmers.add_argument('-I', '--input_list', help='file containing list of fasta or fastq files', type=str, required=False)
+    get_kmers.add_argument('-I', '--input_list', help='file containing list of fasta or fastq files', type=str,
+                           required=False)
     get_kmers.add_argument('-o', '--output', help='output directory', required=True)
     get_kmers.add_argument('-t', '--threads', help=f"number of threads [{nthreads}]", default=nthreads, type=int)
     get_kmers.add_argument('-m' '--mem', help=f"memory in GB [{mem}]", default=mem, type=int)
     get_kmers.add_argument('-f', '--format', help='format: fa - fasta single line. fq - fastq. fm - fasta '
-                                                         'multiline', required=True, choices=['fa', 'fq', 'fm'])
+                                                  'multiline', required=True, choices=['fa', 'fq', 'fm'])
     get_kmers.add_argument('-k', '--kmer', help='kmer size', required=True)
 
     run_ibspy = subparsers.add_parser('run_ibspy', help='Run IBSpy on the output of KMC and generate variant tables')
@@ -91,6 +92,7 @@ def main():
     parser_kcf2matrix.add_argument('-i', '--input', help='Input kcf file', required=True)
     parser_kcf2matrix.add_argument('-o', '--output', help='Output prefix', required=True)
     parser_kcf2matrix.add_argument('-s', '--sample',
+                                   default=None,
                                    help='Sample name (if not given, will be taken from input file name)')
     parser_kcf2matrix.add_argument('-a', '--allele_a_cutoff', help='Allele A cutoff [default: 0.8]', default=0.8,
                                    type=float)
@@ -102,6 +104,7 @@ def main():
     parser_split_kcf.add_argument('-i', '--input', help='Input kcf file', required=True)
     parser_split_kcf.add_argument('-o', '--output', help='Output prefix', required=True)
     parser_split_kcf.add_argument('-s', '--sample',
+                                  default=None,
                                   help='Sample name (if not given, will be taken from input file name)')
     parser_split_kcf.add_argument('-c', '--chrs', help='Chromosomes to be extracted', nargs='+')
 
@@ -169,6 +172,3 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
     run(args)
-
-
-

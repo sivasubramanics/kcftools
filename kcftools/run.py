@@ -14,6 +14,7 @@ def run(args):
     Run IBSpy
     """
     start_time = time.time()
+    args = ArgumentParser(args)
     if args.command == 'get_kmers':
         from kcftools.plugins.GetKmers import GetKmers
         GetKmers.run(args)
