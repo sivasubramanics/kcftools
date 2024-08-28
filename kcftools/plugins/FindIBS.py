@@ -12,11 +12,11 @@ from kcftools.utils.writers import write_kcf
 
 class FindIBS:
     def __init__(self, args):
-        self.input_file = args.input_file
-        self.output_file = args.output_file
-        self.min_variations = args.min_variations
-        self.min_score = args.min_score
-        self.min_consecutive = args.min_consecutive
+        self.input_file = args.input
+        self.output_file = args.output
+        self.min_variations = args.variations
+        self.min_score = args.score
+        self.min_consecutive = args.consecutive
         self.reverse = args.reverse
 
     def run(self):
@@ -60,7 +60,7 @@ class FindIBS:
                         first_block = True
                         block_num += 1
                         na_num = 0
-                    if windows[key].data[sample].score <= self.min_score:
+                    if windows[key].data[sample].score <= self.min_score and windows[key].data[sample].score >= 0.5:
                         if first_block:
                             block_num += 1
                         if na_num > self.min_consecutive:

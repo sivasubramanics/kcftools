@@ -1,4 +1,4 @@
-!#/usr/bin/env python3
+#!/usr/bin/env python3
 
 """
 This module is used to parse the command line arguments and return specific to the plugin
@@ -12,3 +12,4 @@ class ArgumentParser:
 
     def parse_args(args):
         if self.command == "
+    # TODO: Implement this function to parse the arguments in more project specific way and return the parsed arguments

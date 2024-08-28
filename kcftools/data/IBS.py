@@ -1,6 +1,9 @@
 
 
 class IBS:
+    """
+    IBS class to store IBS windows
+    """
     def __init__(self, seqname):
         self.seqname = seqname
         self.starts = []
@@ -15,8 +18,6 @@ class IBS:
         self.is_ibs.append(is_ibs)
 
     def remove_tail_na(self):
-        # remove the tailing False from the list of is_ibs
-        # count number of False from the end of the list
         tail_na_count = 0
         for is_ibs in reversed(self.is_ibs):
             if is_ibs:

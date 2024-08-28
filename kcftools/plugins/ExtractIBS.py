@@ -8,9 +8,9 @@ from kcftools.utils.helper_functions import ibs_to_binary
 
 class ExtractIBS:
     def __init__(self, args):
-        self.input_file = args.input_file
-        self.output_prefix = args.output_prefix
-        self.sample_name = args.sample_name
+        self.input_file = args.input
+        self.output_prefix = args.output
+        self.sample_name = args.sample
         self.heatmap = args.heatmap
 
     def run(self):

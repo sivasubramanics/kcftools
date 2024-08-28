@@ -25,14 +25,14 @@ def main():
                            required=False)
     get_kmers.add_argument('-o', '--output', help='output directory', required=True)
     get_kmers.add_argument('-t', '--threads', help=f"number of threads [{nthreads}]", default=nthreads, type=int)
-    get_kmers.add_argument('-m' '--mem', help=f"memory in GB [{mem}]", default=mem, type=int)
+    get_kmers.add_argument('-m', '--mem', help=f"memory in GB [{mem}]", default=mem, type=int)
     get_kmers.add_argument('-f', '--format', help='format: fa - fasta single line. fq - fastq. fm - fasta '
                                                   'multiline', required=True, choices=['fa', 'fq', 'fm'])
     get_kmers.add_argument('-k', '--kmer', help='kmer size', required=True)
 
     run_ibspy = subparsers.add_parser('run_ibspy', help='Run IBSpy on the output of KMC and generate variant tables')
     run_ibspy.add_argument('-i', '--input', help='kmc database directory', required=True)
-    run_ibspy.add_argument('-f', '--fasta', help='reference fasta file', required=True)
+    run_ibspy.add_argument('-r', '--reference', help='reference fasta file', required=True)
     run_ibspy.add_argument('-n', '--name', help='reference name to be added with output', required=True)
     run_ibspy.add_argument('-k', '--kmer', help='kmer size', required=True)
     run_ibspy.add_argument('-w', '--window', help='window size', required=True)

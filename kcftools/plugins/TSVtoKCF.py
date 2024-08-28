@@ -9,9 +9,12 @@ from kcftools.utils.writers import write_kcf
 
 class TSVtoKCF:
     def __init__(self, args):
-        self.input_file = args.input_file
-        self.output_file = args.output_file
-        self.sample_name = args.sample_name
+        self.input_file = args.input
+        self.output_file = args.output
+        if args.sample:
+            self.sample_name = args.sample
+        else:
+            self.sample_name = None
 
     def run(self):
         """

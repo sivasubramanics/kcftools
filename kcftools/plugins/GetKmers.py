@@ -14,18 +14,19 @@ from kcftools._defaults import ibspy_tools
 
 class GetKmers:
     def __init__(self, args):
+        print(args)
         if args.input:
             self.input = args.input
         self.output = args.output
         if args.input_list:
             self.input_list = args.input_list
+        else:
+            self.input_list = None
         if not self.input_list and not self.input:
             logging.error("Please provide input or input_list")
             exit(1)
-        self.reference = args.reference
         self.threads = args.threads
         self.kmer = args.kmer
-        self.window = args.window
         self.format = args.format
         self.mem = args.mem
         self.timestamp = str(time.time()).replace(".", "")
@@ -98,7 +99,7 @@ class GetKmers:
         kmc_cmd.append(f"{self.output}/canon")
 
         # temporary directory
-        kmc_cmd.append(f"{self.output}/temp")
+        kmc_cmd.append(f"{self.output}/tmp")
 
         # run kmc
         stdout, stderr = run_cmd(kmc_cmd, "Running kmc for cannonized kmers")
@@ -107,10 +108,13 @@ class GetKmers:
             log.write(stdout)
 
         # remove last 3 from kmc_cmd to run kmc for all kmers
-        kmc_cmd = kmc_cmd[:-3].append("-b")
+        print(kmc_cmd)
+        kmc_cmd = kmc_cmd[:-3]
+        kmc_cmd.append("-b")
+        print(kmc_cmd)
         kmc_cmd.append(f"{kmc_ifiles}")
         kmc_cmd.append(f"{self.output}/all")
-        kmc_cmd.append(f"{self.output}/temp")
+        kmc_cmd.append(f"{self.output}/tmp")
 
         # run kmc for all kmers
         stdout, stderr = run_cmd(kmc_cmd, "Running kmc for all kmers")

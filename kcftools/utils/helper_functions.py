@@ -42,9 +42,12 @@ def is_installed(tool):
     """
     Check if the tool is accessible in the system. Return True if installed, False otherwise
     """
-    cmd = f"which {tool}"
-    stdout, stderr = run_cmd(cmd)
-    if stdout:
+    # cmd = f"which {tool}"
+    # stdout, stderr = run_cmd(cmd)
+    # if stdout:
+    #     return True
+    # return False
+    if shutil.which(tool):
         return True
     return False
 
