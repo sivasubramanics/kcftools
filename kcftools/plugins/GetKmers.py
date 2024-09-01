@@ -14,7 +14,6 @@ from kcftools._defaults import ibspy_tools
 
 class GetKmers:
     def __init__(self, args):
-        print(args)
         if args.input:
             self.input = args.input
         self.output = args.output
@@ -108,10 +107,8 @@ class GetKmers:
             log.write(stdout)
 
         # remove last 3 from kmc_cmd to run kmc for all kmers
-        print(kmc_cmd)
         kmc_cmd = kmc_cmd[:-3]
         kmc_cmd.append("-b")
-        print(kmc_cmd)
         kmc_cmd.append(f"{kmc_ifiles}")
         kmc_cmd.append(f"{self.output}/all")
         kmc_cmd.append(f"{self.output}/tmp")
