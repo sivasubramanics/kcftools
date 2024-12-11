@@ -21,7 +21,7 @@ import static nl.wur.bis.kcftools.Utils.HelperFunctions.log;
                 GetAttributes.class,
                 KCFToMatrix.class,
                 KCFToTSV.class,
-                CompareIBS.class,
+                CompareIBS.class
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
