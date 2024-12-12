@@ -2,8 +2,11 @@ package nl.wur.bis.kcftools.Plugins;
 
 import nl.wur.bis.kcftools.Data.*;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import picocli.CommandLine;
 import picocli.CommandLine.*;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -19,7 +22,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
     @Option(names = {"-k", "--kmc"}, description = "KMC database prefix", required = true)
     private String kmcDBprefix;
     // in window size
-    @Option(names = {"-w", "--window"}, description = "Window size", required = true)
+    @Option(names = {"-w", "--window"}, description = "Window size", required = false)
     private int windowSize;
     // in output file name
     @Option(names = {"-o", "--output"}, description = "Output file name", required = true)
@@ -33,23 +36,26 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // load kmc into memory
     @Option(names = {"-m", "--memory"}, description = "Load KMC database into memory", required = false)
     private boolean loadMemory = false;
+    // if its RNA-seq data, get gtf file and feature type (gene, mRNA, CDS)
+    @Option(names = {"-g", "--gtf"}, description = "GTF file name", required = false)
+    private String gtfFile;
+    @Option(names = {"-f", "--feature"}, description = "Feature type (\"gene\" or \"transcript\")", required = false, defaultValue = "transcript")
+    private String featureType;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
+    private String model = "wholegenome";
+    private FastaIndex index;
+    private int kmerSize;
+    private GTFReader gtfReader;
 
 
     public GetVariants() {
     }
 
-    public GetVariants(String refFasta, String kmcDBprefix, int windowSize, String outFile, int nThreads) {
-        this.refFasta = refFasta;
-        this.kmcDBprefix = kmcDBprefix;
-        this.windowSize = windowSize;
-        this.outFile = outFile;
-        this.nThreads = nThreads;
-    }
 
     @Override
     public Integer call() throws IOException, InterruptedException {
+        validateCMD();
         getVariations();
         return 0;
     }
@@ -66,7 +72,9 @@ public class GetVariants implements Callable<Integer>, Runnable {
     public void getVariations() throws IOException, InterruptedException {
         // eg cmd line: kcftools get_variations -r /data/arabidopsis.fna -k /data/arabidopsis -w 1000 -o /data/arabidopsis.variations.tsv -t 4
         printCommandLine();
+
         KMC kmc = new KMC(kmcDBprefix, loadMemory);
+        kmerSize = kmc.getKmerLength();
         KCFHeader header = new KCFHeader();
         header.setReference(refFasta);
         header.addCommandLine(HelperFunctions.getCommandLine());
@@ -75,27 +83,22 @@ public class GetVariants implements Callable<Integer>, Runnable {
         header.setKmerSize(kmc.getKmerLength());
         header.setIBS(false);
 
-        FastaIndex index = new FastaIndex(refFasta);
-        AtomicInteger windowId = new AtomicInteger(0); // For unique window IDs
+        index = new FastaIndex(refFasta);
         ConcurrentHashMap<String, Queue<Window>> windowsMap = new ConcurrentHashMap<>();
 
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
-        List<Future<Void>> futures = new ArrayList<>();
+        if (gtfFile != null) {
+            model = "targeted";
+            gtfReader = new GTFReader(gtfFile);
+        }
+        else{
+            model = "wholegenome";
+        }
 
         HelperFunctions.log("info", CLASS_NAME, "Generating windows...");
         for (String name : index.getSequenceNames()) {
             header.addContig(name, index.getSequenceLength(name));
-            Queue<Window> windows = getWindows(name, index.getSequenceLength(name), kmc.getKmerLength(), windowSize);
+            Queue<Window> windows = getWindows(name);
             windowsMap.put(name, windows);
-        }
-
-        HelperFunctions.log("info", CLASS_NAME, "Update Window ids...");
-        // change the windowID for each window in increasing order
-        for (String name : index.getSequenceNames()) {
-            Queue<Window> windows = windowsMap.get(name);
-            for (Window window : windows) {
-                window.setWindowId(windowId.incrementAndGet());
-            }
         }
 
         int totalWindows = windowsMap.values().stream().mapToInt(Queue::size).sum();
@@ -104,7 +107,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         LinkedHashMap<String, List<Window>> processedWindows = new LinkedHashMap<>();
         AtomicInteger completedWindows = new AtomicInteger(0);
 
-        executor = Executors.newFixedThreadPool(nThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
         for (String name : windowsMap.keySet()) {
             Queue<Window> windows = windowsMap.get(name);
             List<Window> processed = new ArrayList<>(windows.size());
@@ -112,7 +115,8 @@ public class GetVariants implements Callable<Integer>, Runnable {
             ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(executor);
             for (Window window : windows) {
                 completionService.submit(() -> {
-                    Window processedWindow = processWindow(window, index, kmc);
+                    Fasta fasta = getFasta(window);
+                    Window processedWindow = processWindow(window, fasta, kmc);
                     synchronized (processed) {
                         processed.add(processedWindow);
                     }
@@ -162,66 +166,35 @@ public class GetVariants implements Callable<Integer>, Runnable {
         printMaxMemoryUsage();
     }
 
-
+    private Fasta getFasta(Window window){
+        return switch (model) {
+            case "wholegenome" -> window.getFasta(index);
+            case "targeted" -> gtfReader.getFasta(window.getWindowId(), featureType, index);
+            default -> {
+                HelperFunctions.log("error", CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
+                yield null;
+            }
+        };
+    }
 
 
     /***
      * Process a window and calculate the number of observed kmers and the variation
      */
-//    private Window processWindow(Window window, FastaIndex index, KMC kmc) {
+    private Window processWindow(Window window, Fasta fasta, KMC kmc) {
 //        Fasta fasta = window.getFasta(index);
-//        int localTotalKmers = 0;
-//        int localObservedKmers = 0;
-//        int localVariation = 0;
-//        int localDistance = 0;
-//        int gapSize = 0;
-//
-//        List<Kmer> kmers = fasta.getKmersList(kmc.getKmerLength(), kmc.getPrefixLength(), false);
-//        if (!kmers.isEmpty()) {
-//            for (Kmer k : kmers) {
-//                localTotalKmers++;
-//                Kmer km = new Kmer(k, kmc.isBothStrands());
-//                if (kmc.isExist(km)) {
-//                    localObservedKmers++;
-//                    if (gapSize > 0) {
-//                        localVariation++;
-//                        int distance = gapSize - kmc.getKmerLength() - 1;
-//                        if (distance < 0) {
-//                            distance = (distance + 1) * -1;
-//                        }
-//                        localDistance += distance;
-//                    }
-//                    gapSize = 0;
-//                } else {
-//                    gapSize++;
-//                }
-//            }
-//            if (gapSize > 0) {
-//                localVariation++;
-//                int distance = gapSize - (kmc.getKmerLength() - 1);
-//                if (distance <= 0) {
-//                    distance = Math.abs(distance + 1);
-//                }
-//                localDistance += distance;
-//                gapSize = 0;
-//            }
-//        }
-//        synchronized (window) {
-//            window.addTotalKmers(localTotalKmers);
-//            window.addData(sampleName, localObservedKmers, localVariation, localDistance, "N");
-//        }
-//        return window;
-//    }
-
-    private Window processWindow(Window window, FastaIndex index, KMC kmc) {
-        Fasta fasta = window.getFasta(index);
         int localTotalKmers = 0;
         int localObservedKmers = 0;
         int localVariation = 0;
         int localDistance = 0;
         int gapSize = 0;
 
+        if (fasta == null) {
+            HelperFunctions.log("error", CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
+            return window;
+        }
         List<Kmer> kmers = fasta.getKmersList(kmc.getKmerLength(), kmc.getPrefixLength(), false);
+
         if (!kmers.isEmpty()) {
             for (Kmer k : kmers) {
                 localTotalKmers++;
@@ -267,27 +240,46 @@ public class GetVariants implements Callable<Integer>, Runnable {
      * Print the command line options
      */
     private void printCommandLine() {
+        String name;
+        String value;
         HelperFunctions.log("info", CLASS_NAME, "========== CMD options - getVariations ===========");
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Reference file name", refFasta));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "KMC database prefix", kmcDBprefix));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Window size", windowSize));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Output file name", outFile));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Number of threads", nThreads));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Sample name", sampleName));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Load KMC into memory", loadMemory));
+        for (CommandLine.Model.OptionSpec option : new CommandLine(this).getCommandSpec().options()) {
+            if (option.isOption()) {
+                // get long name of the command
+                if (option.names().length == 1) {
+                    name = option.names()[0];
+                }
+                else {
+                    name = option.names()[1];
+                }
+                value = option.getValue().toString();
+                HelperFunctions.log("info", CLASS_NAME, String.format("%-15s: %s", name, value));
+            }
+        }
         HelperFunctions.log("info", CLASS_NAME, "==================================================");
     }
 
-    private Queue<Window> getWindows(String sequenceName, int sequenceLength, int kmerSize, int windowSize) {
+    private Queue<Window> getWindows(String sequenceName) {
         Queue<Window> windows = new ConcurrentLinkedDeque<>();
-        int lastEnd = 0;
-        while (lastEnd < sequenceLength) {
-            int start = Math.max(0, lastEnd - kmerSize);
-            int end = Math.min(start + windowSize, sequenceLength);
-            if (end - start >= kmerSize) {
-                windows.add(new Window(1, sequenceName, start, end));
+        int sequenceLength = index.getSequenceLength(sequenceName);
+        switch (model) {
+            case "wholegenome" -> {
+                int lastEnd = 0;
+                while (lastEnd < sequenceLength) {
+                    int start = Math.max(0, lastEnd - kmerSize);
+                    int end = Math.min(start + windowSize, sequenceLength);
+                    if (end - start >= kmerSize) {
+                        windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
+                    }
+                    lastEnd = end;
+                }
             }
-            lastEnd = end;
+            case "targeted" -> {
+                for (GTFReader.Feature feature : gtfReader.getFeatures(sequenceName, featureType)) {
+                    windows.add(new Window(feature.getId(), sequenceName, feature.getStart(), feature.getEnd()));
+                }
+            }
+            default -> HelperFunctions.log("error", CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
         }
         return windows;
     }
@@ -305,6 +297,31 @@ public class GetVariants implements Callable<Integer>, Runnable {
         HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Free Memory (GB)", freeMemory / (1024.0 * 1024 * 1024)));
         HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Used Memory (GB)", usedMemory / (1024.0 * 1024 * 1024)));
         HelperFunctions.log("info", CLASS_NAME, "==================================================");
+    }
+
+    private void validateCMD() {
+        if(gtfFile != null){
+            if (windowSize > 0) {
+                HelperFunctions.log("error", CLASS_NAME, "Window size is not valid for targeted model");
+            }
+            if (featureType == null) {
+                HelperFunctions.log("error", CLASS_NAME, "Feature type (gene or transcript) is required for targeted model");
+            }
+            if (!featureType.equals("gene") && !featureType.equals("transcript")) {
+                HelperFunctions.log("error", CLASS_NAME, "Invalid feature type: " + featureType + ". Supported feature types are 'gene' and 'transcript'");
+            }
+        }
+        if (featureType != null){
+            if (gtfFile == null) {
+                HelperFunctions.log("error", CLASS_NAME, "GTF file is required for targeted model");
+            }
+        }
+        if (windowSize <= 0 && gtfFile == null) {
+            HelperFunctions.log("error", CLASS_NAME, "Window size (for wholegenome model) or GTF file (for targeted model) is required");
+        }
+        if (nThreads <= 0) {
+            HelperFunctions.log("error", CLASS_NAME, "Number of threads should be greater than 0");
+        }
     }
 }
 //EOF

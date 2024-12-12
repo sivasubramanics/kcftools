@@ -66,7 +66,7 @@ public class Cohort implements Callable<Integer>, Runnable {
                 if (i == 0) {
                     header = reader.getHeader();
                     for (Window window : reader) {
-                        windows.put(getWindowKey(window), window);
+                        windows.put(window.getWindowId(), window);
                     }
                 } else {
                     tmpHeader = reader.getHeader();
@@ -76,7 +76,7 @@ public class Cohort implements Callable<Integer>, Runnable {
                     }
                     header.mergeHeader(tmpHeader);
                     for (Window window : reader) {
-                        String key = getWindowKey(window);
+                        String key = window.getWindowId();
                         if (windows.containsKey(key)) {
                             windows.get(key).addData(window.getData());
                         } else {

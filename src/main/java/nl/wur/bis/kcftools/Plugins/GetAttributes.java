@@ -63,7 +63,6 @@ public class GetAttributes implements Callable<Integer>, Runnable {
             KCFHeader header = reader.getHeader();
             String[] samples = header.getSamples();
             int nWindows = header.getWindowCount();
-            observedKmers = new int[nWindows][samples.length];
             obsWriter.write("window_id");
             varWriter.write("window_id");
             scoreWriter.write("window_id");
@@ -80,14 +79,13 @@ public class GetAttributes implements Callable<Integer>, Runnable {
             totWriter.newLine();
             winlen.newLine();
             for (Window window: reader){
-                obsWriter.write(window.getWindowId() + "");
-                varWriter.write(window.getWindowId() + "");
-                scoreWriter.write(window.getWindowId() + "");
-                for (int i = 0; i < samples.length; i++){
-                    observedKmers[window.getWindowId()][i] = window.getObservedKmers(samples[i]);
-                    obsWriter.write("\t" + window.getObservedKmers(samples[i]));
-                    varWriter.write("\t" + window.getVariations(samples[i]));
-                    scoreWriter.write("\t" + window.getScore(samples[i]));
+                obsWriter.write(window.getWindowId());
+                varWriter.write(window.getWindowId());
+                scoreWriter.write(window.getWindowId());
+                for (String sample : samples) {
+                    obsWriter.write("\t" + window.getObservedKmers(sample));
+                    varWriter.write("\t" + window.getVariations(sample));
+                    scoreWriter.write("\t" + String.format("%.2f", window.getScore(sample)));
                 }
                 totWriter.write(window.getWindowId() + "\t" + window.getTotalKmers());
                 winlen.write(window.getWindowId() + "\t" + window.length());

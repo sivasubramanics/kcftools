@@ -11,7 +11,7 @@ import java.util.Objects;
  * Class to represent a window in the KCF file
  */
 public class Window implements Comparable<Window> {
-    int windowId;
+    String windowId;
     String sequenceName;
     int start;
     int end;
@@ -27,7 +27,7 @@ public class Window implements Comparable<Window> {
     float maxScore;
     float meanScore;
 
-    public Window(int windowId, String sequenceName, int start, int end, int totalKmers, String[] samples){
+    public Window(String windowId, String sequenceName, int start, int end, int totalKmers, String[] samples){
         this.windowId = windowId;
         this.sequenceName = sequenceName;
         this.start = start;
@@ -39,7 +39,7 @@ public class Window implements Comparable<Window> {
         }
     }
 
-    public Window(int windowId, String sequenceName, int start, int end, int totalKmers){
+    public Window(String windowId, String sequenceName, int start, int end, int totalKmers){
         this.windowId = windowId;
         this.sequenceName = sequenceName;
         this.start = start;
@@ -48,7 +48,7 @@ public class Window implements Comparable<Window> {
         this.data = new LinkedHashMap<>();
     }
 
-    public Window(int windowId, String sequenceName, int start, int end){
+    public Window(String windowId, String sequenceName, int start, int end){
         this.windowId = windowId;
         this.sequenceName = sequenceName;
         this.start = start;
@@ -91,6 +91,7 @@ public class Window implements Comparable<Window> {
         sb.append(sequenceName)
                 .append("\t").append(start)
                 .append("\t").append(end)
+                .append("\t").append(windowId)
                 .append("\t").append(totalKmers)
                 .append("\t").append(getInfoField())
                 .append("\t").append(getFormatField());
@@ -166,10 +167,10 @@ public class Window implements Comparable<Window> {
 
 
     public Fasta getFasta(FastaIndex index) {
-        return new Fasta(windowId, String.valueOf(windowId), index.getSequence(sequenceName, start, length()), sequenceName + ":" + start + "-" + end);
+        return new Fasta(1, String.valueOf(windowId), index.getSequence(sequenceName, start, length()), sequenceName + ":" + start + "-" + end);
     }
 
-    public int getWindowId() {
+    public String getWindowId() {
         return windowId;
     }
 
@@ -249,8 +250,8 @@ public class Window implements Comparable<Window> {
         return totalKmers;
     }
 
-    public void setWindowId(int i) {
-        windowId = i;
+    public void setWindowId(String windowId) {
+        this.windowId = windowId;
     }
 
     public String toTSV(String sample) {

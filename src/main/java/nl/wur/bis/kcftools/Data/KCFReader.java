@@ -87,14 +87,14 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
                 String sequenceName = fields[0];
                 int start = Integer.parseInt(fields[1]);
                 int end = Integer.parseInt(fields[2]);
-                int totalKmers = Integer.parseInt(fields[3]);
+                String windowId = fields[3];
+                int totalKmers = Integer.parseInt(fields[4]);
 
                 Window window = new Window(windowId, sequenceName, start, end, totalKmers);
-                windowId++;
 
                 // Parse sample data
                 for (int i = 0; i < getHeader().getSamples().length; i++) {
-                    String[] sampleData = fields[i + 6].split(":");
+                    String[] sampleData = fields[i + 7].split(":");
                     window.addData(getHeader().getSamples()[i], Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), sampleData[0]);
                 }
 

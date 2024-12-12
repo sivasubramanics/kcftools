@@ -68,8 +68,8 @@ public class KCFHeader implements Comparable<KCFHeader> {
             } else if (line.startsWith("#CHROM")){
                 // split line by tab and get sample names from the 6th index
                 String[] fields = line.split("\t");
-                samples = new String[fields.length - 6];
-                System.arraycopy(fields, 6, samples, 0, fields.length - 6);
+                samples = new String[fields.length - 7];
+                System.arraycopy(fields, 7, samples, 0, fields.length - 7);
             } else if (line.startsWith("##PARAM=")){
                 Pair param = getParam(line);
                 switch (param.getKey()){
@@ -222,7 +222,7 @@ public class KCFHeader implements Comparable<KCFHeader> {
                 sb.append("##CMD=").append(commandLine).append("\n");
             }
         }
-        sb.append("#CHROM\tSTART\tEND\tTOTAL_KMERS\tINFO\tFORMAT");
+        sb.append("#CHROM\tSTART\tEND\tID\tTOTAL_KMERS\tINFO\tFORMAT");
         if (samples != null){
             for (String sample : samples){
                 sb.append("\t").append(sample);
