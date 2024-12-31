@@ -15,26 +15,23 @@ public class FindIBS implements Callable<Integer>, Runnable {
     // in KCF file name
     @Option(names = {"-i", "--input"}, description = "Input KCF file name", required = true)
     private String inFile;
-    // in Reference Fasta file name
-    @Option(names = {"-r", "--reference"}, description = "Reference Fasta file name", required = true)
-    private String refFasta;
     // in output file name
     @Option(names = {"-o", "--output"}, description = "Output KCF file name", required = true)
     private String outFile;
     // flag to detect IBS or Variable Regions
-    @Option(names = {"--var"}, description = "Detect Variable Regions instead of IBS", required = false, defaultValue = "false")
+    @Option(names = {"--var"}, description = "Detect Variable Regions instead of IBS [default: false]", required = false, defaultValue = "false")
     private boolean detectVar;
     // number of minimum consecutive windows
-    @Option(names = {"--min"}, description = "Minimum number of consecutive windows", required = false, defaultValue = "4")
+    @Option(names = {"--min"}, description = "Minimum number of consecutive windows [default: 4]", required = false, defaultValue = "4")
     private int minConsecutive;
     // score cut-off
-    @Option(names = {"--score"}, description = "Score cut-off", required = false, defaultValue = "95")
+    @Option(names = {"--score"}, description = "Score cut-off [default: 95.00]", required = false, defaultValue = "95")
     private float scoreCutOff;
     // flag to write summary tsv file
-    @Option(names = {"--summary"}, description = "Write summary tsv file", required = false, defaultValue = "false")
+    @Option(names = {"--summary"}, description = "Write summary tsv file [default: false]", required = false, defaultValue = "false")
     private boolean writeSummary;
     // flag to write bed file
-    @Option(names = {"--bed"}, description = "Write bed file", required = false, defaultValue = "false")
+    @Option(names = {"--bed"}, description = "Write bed file [default: false]", required = false, defaultValue = "false")
     private boolean writeBed;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
@@ -67,57 +64,53 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
     private void findIBS() throws Exception {
 
+        // if outFile doesnt end with .kcf, add it
+        if (!outFile.endsWith(".kcf")) {
+            outFile += ".kcf";
+        }
+
         KCFReader reader = new KCFReader(inFile);
         KCFHeader header = reader.getHeader();
         HashMap<String, Integer> windowsCount = new HashMap<>();
-        FastaIndex index = new FastaIndex(refFasta);
-        for (String name : index.getSequenceNames()) {
-            int sequenceLength = index.getSequenceLength(name);
-            int lastEnd = 0;
-            while (lastEnd < sequenceLength) {
-                int start = Math.max(0, lastEnd - header.getKmerSize());
-                int end = Math.min(start + header.getWindowSize(), sequenceLength);
-
-                if (end - start >= header.getKmerSize()) {
-                    // add a count to the windowCount hashMap for the chromosome
-                    windowsCount.put(name, windowsCount.getOrDefault(name, 0) + 1);
-                }
-                lastEnd = end;
+        HashMap<String, ArrayList<Window>> windowsList = new HashMap<>();
+        for (Window window: reader) {
+            String name = window.getSequenceName();
+            if (!windowsCount.containsKey(name)) {
+                windowsCount.put(name, 0);
+                windowsList.put(name, new ArrayList<>());
             }
+            windowsCount.put(name, windowsCount.get(name) + 1);
+            windowsList.get(name).add(window);
         }
-        index.close();
+        reader.close();
 
         // create a Array of Window objects for each chromosome
         HashMap<String, Window[]> windows = new HashMap<>();
-        for (String name : index.getSequenceNames()) {
+        for (String name : windowsCount.keySet()) {
             int windowSize = windowsCount.get(name);
             windows.put(name, new Window[windowSize]);
         }
 
-        // fill the windows array with Window objects
-        String name, lastName = null;
-        int winNum = 0;
-        for (Window window : reader) {
-            name = window.getSequenceName();
-            if (!windows.containsKey(name)) {
-                HelperFunctions.log("error", CLASS_NAME, "Sequence not found in index: " + name);
+
+        for (String chromName : windowsList.keySet()) {
+            int winNum = 0;
+            for (Window window: windowsList.get(chromName)) {
+                if (window == null) {
+                    HelperFunctions.log("error", CLASS_NAME, "Window not found in index: " + chromName);
+                    continue;
+                }
+                windows.get(chromName)[winNum] = window;
+                winNum++;
             }
-            // add the window to the windows array for the chromosome in windows HashMap
-            if (lastName == null || !lastName.equals(name)) {
-                winNum = 0;
-            }
-            windows.get(name)[winNum] = window;
-            winNum++;
-            lastName = name;
         }
-        reader.close();
+
         String[] samples = header.getSamples();
         for (String sample : samples) {
             HelperFunctions.log("info", CLASS_NAME, "Finding IBS for sample: " + sample);
             int blockNum = 0;
             String blockChrom = null;
             boolean firstIBSFound = false;
-            for (String chromName : index.getSequenceNames()) {
+            for (String chromName : windows.keySet()) {
                 Window[] chromWindows = windows.get(chromName);
                 int numNA = 0;
                 float score = 0;
@@ -161,7 +154,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
             header.setIBS(true);
             header.addCommandLine(HelperFunctions.getCommandLine());
             writer.writeHeader(header);
-            for (String chromName : index.getSequenceNames()) {
+            for (String chromName : windows.keySet()) {
                 for (Window window : windows.get(chromName)) {
                     writer.writeWindow(window);
                 }
