@@ -5,8 +5,6 @@ import nl.wur.bis.kcftools.Utils.HelperFunctions;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -39,7 +37,8 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // if its RNA-seq data, get gtf file and feature type (gene, mRNA, CDS)
     @Option(names = {"-g", "--gtf"}, description = "GTF file name", required = false)
     private String gtfFile;
-    @Option(names = {"-f", "--feature"}, description = "Feature type (\"gene\" or \"transcript\")", required = false, defaultValue = "transcript")
+    // feature type: gene or transcript
+    @Option(names = {"-f", "--feature"}, description = "Feature type (\"gene\" or \"transcript\")", required = false)
     private String featureType;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
@@ -48,13 +47,12 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private int kmerSize;
     private GTFReader gtfReader;
 
-
     public GetVariants() {
     }
 
-
     @Override
     public Integer call() throws IOException, InterruptedException {
+        HelperFunctions.printCommandLine(new CommandLine(this), CLASS_NAME);
         validateCMD();
         getVariations();
         return 0;
@@ -69,9 +67,10 @@ public class GetVariants implements Callable<Integer>, Runnable {
         }
     }
 
-    public void getVariations() throws IOException, InterruptedException {
-        // eg cmd line: kcftools get_variations -r /data/arabidopsis.fna -k /data/arabidopsis -w 1000 -o /data/arabidopsis.variations.tsv -t 4
-        printCommandLine();
+    /***
+     * Get the variations
+     */
+    public void getVariations() throws IOException {
 
         KMC kmc = new KMC(kmcDBprefix, loadMemory);
         kmerSize = kmc.getKmerLength();
@@ -163,9 +162,12 @@ public class GetVariants implements Callable<Integer>, Runnable {
         }
         index.close();
         kmc.close();
-        printMaxMemoryUsage();
+        HelperFunctions.printMaxMemoryUsage();
     }
 
+    /***
+     * Get the Fasta object based on the model type
+     */
     private Fasta getFasta(Window window){
         return switch (model) {
             case "wholegenome" -> window.getFasta(index);
@@ -177,12 +179,10 @@ public class GetVariants implements Callable<Integer>, Runnable {
         };
     }
 
-
     /***
      * Process a window and calculate the number of observed kmers and the variation
      */
     private Window processWindow(Window window, Fasta fasta, KMC kmc) {
-//        Fasta fasta = window.getFasta(index);
         int localTotalKmers = 0;
         int localObservedKmers = 0;
         int localVariation = 0;
@@ -235,30 +235,9 @@ public class GetVariants implements Callable<Integer>, Runnable {
         return window;
     }
 
-
     /***
-     * Print the command line options
+     * Get the windows based on the model type
      */
-    private void printCommandLine() {
-        String name;
-        String value;
-        HelperFunctions.log("info", CLASS_NAME, "========== CMD options - getVariations ===========");
-        for (CommandLine.Model.OptionSpec option : new CommandLine(this).getCommandSpec().options()) {
-            if (option.isOption()) {
-                // get long name of the command
-                if (option.names().length == 1) {
-                    name = option.names()[0];
-                }
-                else {
-                    name = option.names()[1];
-                }
-                value = option.getValue().toString();
-                HelperFunctions.log("info", CLASS_NAME, String.format("%-15s: %s", name, value));
-            }
-        }
-        HelperFunctions.log("info", CLASS_NAME, "==================================================");
-    }
-
     private Queue<Window> getWindows(String sequenceName) {
         Queue<Window> windows = new ConcurrentLinkedDeque<>();
         int sequenceLength = index.getSequenceLength(sequenceName);
@@ -284,23 +263,11 @@ public class GetVariants implements Callable<Integer>, Runnable {
         return windows;
     }
 
-    private void printMaxMemoryUsage() {
-        Runtime runtime = Runtime.getRuntime();
-        long maxMemory = runtime.maxMemory();
-        long allocatedMemory = runtime.totalMemory();
-        long freeMemory = runtime.freeMemory();
-        long usedMemory = allocatedMemory - freeMemory;
-
-        HelperFunctions.log("info", CLASS_NAME, "============= Memory Usage Statistics ============");
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Max Memory (GB)", maxMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Allocated Memory (GB)", allocatedMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Free Memory (GB)", freeMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Used Memory (GB)", usedMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, "==================================================");
-    }
-
+    /***
+     * Validate the command line arguments
+     */
     private void validateCMD() {
-        if(gtfFile != null){
+        if(gtfFile != null && gtfFile.isEmpty()){
             if (windowSize > 0) {
                 HelperFunctions.log("error", CLASS_NAME, "Window size is not valid for targeted model");
             }
@@ -311,7 +278,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
                 HelperFunctions.log("error", CLASS_NAME, "Invalid feature type: " + featureType + ". Supported feature types are 'gene' and 'transcript'");
             }
         }
-        if (featureType != null){
+        if (featureType != null && !featureType.isEmpty()) {
             if (gtfFile == null) {
                 HelperFunctions.log("error", CLASS_NAME, "GTF file is required for targeted model");
             }
