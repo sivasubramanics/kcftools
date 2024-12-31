@@ -1,6 +1,8 @@
 package nl.wur.bis.kcftools.Utils;
 
 
+import picocli.CommandLine;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -414,7 +416,9 @@ public class HelperFunctions {
         return String.format("%.2f:%.2f", totalMemory, availableMemory);
     }
 
-
+    /***
+     * This method is used to check if a string is numeric
+     */
     public static boolean isNumeric(String string) {
         try {
             Integer.parseInt(string);
@@ -424,16 +428,63 @@ public class HelperFunctions {
         }
     }
 
+    /***
+     * This method is used to get the current date
+     */
     public static String getTodayDate() {
         return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 
     /***
      * This method is used to get the command line used to run the program
-     * @return
      */
     public static String getCommandLine() {
         return String.join(" ", System.getProperty("sun.java.command"));
     }
-}
 
+    /***
+     * Print the command line options
+     */
+    public static void printCommandLine(CommandLine commandLine, String className) {
+        String name;
+        String value;
+        log("info", className, "========== CMD options - " + className + " ==========");
+        for (CommandLine.Model.OptionSpec option : commandLine.getCommandSpec().options()) {
+            if (option.isOption()) {
+                // get long name of the command
+                if (option.names().length == 1) {
+                    name = option.names()[0];
+                }
+                else {
+                    name = option.names()[1];
+                }
+                // if getValue is null skip
+                if (option.getValue() == null) {
+                    continue;
+                }
+                value = option.getValue().toString();
+                log("info", className, String.format("%-15s: %s", name, value));
+            }
+        }
+        log("info", className, "==================================================");
+    }
+
+    /***
+     * Print the memory usage
+     */
+    public static void printMaxMemoryUsage() {
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long allocatedMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        long usedMemory = allocatedMemory - freeMemory;
+
+        HelperFunctions.log("info", CLASS_NAME, "============= Memory Usage Statistics ============");
+        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Max Memory (GB)", maxMemory / (1024.0 * 1024 * 1024)));
+        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Allocated Memory (GB)", allocatedMemory / (1024.0 * 1024 * 1024)));
+        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Free Memory (GB)", freeMemory / (1024.0 * 1024 * 1024)));
+        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Used Memory (GB)", usedMemory / (1024.0 * 1024 * 1024)));
+        HelperFunctions.log("info", CLASS_NAME, "==================================================");
+    }
+}
+// EOF
