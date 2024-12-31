@@ -89,11 +89,6 @@ public class Cohort implements Callable<Integer>, Runnable {
             }
         }
 
-//        // reshuffle samples in windows to match the order of samples in header
-//        for (Window window : windows.values()) {
-//            window.shuffleSamples(header.getSamples());
-//        }
-
         try(KCFWriter writer = new KCFWriter(outFile)) {
             assert header != null;
             header.addCommandLine(HelperFunctions.getCommandLine());
@@ -110,9 +105,5 @@ public class Cohort implements Callable<Integer>, Runnable {
             throw new RuntimeException(e);
         }
     }
-
-    private String getWindowKey(Window window) {
-        return window.getSequenceName() + ":" + window.getStart() + "-" + window.getEnd();
-    }
-
 }
+// EOF

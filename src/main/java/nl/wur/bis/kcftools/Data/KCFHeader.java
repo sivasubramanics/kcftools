@@ -8,7 +8,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
 
-
 /**
  * KCFHeader class to store the header information of the KCF file (still there is hope to improve and make it more flexible)
  */

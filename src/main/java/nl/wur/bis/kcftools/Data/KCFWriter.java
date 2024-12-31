@@ -29,7 +29,6 @@ public class KCFWriter implements AutoCloseable {
         writeWindows(windows);
     }
 
-
     public void writeHeader(KCFHeader header) {
         this.header = header;
         try {
@@ -57,8 +56,6 @@ public class KCFWriter implements AutoCloseable {
         }
         writer.flush();
     }
-
-
 
     public void close() {
         try {
