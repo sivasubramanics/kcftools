@@ -15,7 +15,6 @@ public class GTFReader {
     private ArrayList<String> geneIDs;
     private ArrayList<String> transcriptIDs;
 
-
     public GTFReader() {
     }
 
@@ -26,7 +25,6 @@ public class GTFReader {
         transcriptToGene = new HashMap<>();
         readGTF(filePath);
     }
-
 
     // Reads a GTF file and builds the hierarchical structure
     public void readGTF(String filePath) throws IOException {
@@ -92,9 +90,18 @@ public class GTFReader {
                 }
             }
         }
+
+        HelperFunctions.log("info", "GTFReader", "Finished reading GTF file: " + filePath);
+        if (genes.isEmpty()) {
+            HelperFunctions.log("warn", "GTFReader", "No 'gene' features found in GTF file: " + filePath);
+            HelperFunctions.log("warn", "GTFReader", "Please check the GTF file format, else fix them using agat");
+            HelperFunctions.log("error", "GTFReader", "Exiting the program");
+        }
     }
 
-    // Query exons by transcript name
+    /**
+     * Iterate over the exons of a gene
+     */
     public Iterable<Feature> getExons(String transcriptName) {
         String geneId = transcriptToGene.get(transcriptName);
         if (geneId != null) {
@@ -112,7 +119,9 @@ public class GTFReader {
         return Collections.emptyList();
     }
 
-    // Query CDS by transcript name
+    /**
+     * Iterate over all CDS features of a transcript
+     */
     public Iterable<Feature> getCDSs(String transcriptName) {
         String geneId = transcriptToGene.get(transcriptName);
         if (geneId != null) {
@@ -130,7 +139,9 @@ public class GTFReader {
         return Collections.emptyList();
     }
 
-    // Helper method to extract attributes from the attributes field
+    /**
+     * Extract an attribute value from the attributes string
+     */
     private String extractAttribute(String attributes, String key) {
         String[] pairs = attributes.split(";");
         for (String pair : pairs) {
@@ -142,23 +153,23 @@ public class GTFReader {
         return null;
     }
 
-    // Get the FASTA sequence for a specific feature type
+    /**
+     * Get fasta sequence for a feature by ID and type
+     */
     public Fasta getFasta(String id, String featureType, FastaIndex fastaIndex) {
-        switch (featureType.toLowerCase()) {
-            case "gene":
-                return getGeneFasta(id, fastaIndex);
-            case "transcript":
-                return getTranscriptFasta(id, fastaIndex);
-            case "exon":
-                return getExonFasta(id, fastaIndex);
-            case "cds":
-                return getCDSFasta(id, fastaIndex);
-            default:
-                return null;
-        }
+        return switch (featureType.toLowerCase()) {
+            case "gene" -> getGeneFasta(id, fastaIndex);
+            case "transcript" -> getTranscriptFasta(id, fastaIndex);
+            case "exon" -> getExonFasta(id, fastaIndex);
+            case "cds" -> getCDSFasta(id, fastaIndex);
+            default -> null;
+        };
     }
 
-    // Get the FASTA sequence for a gene
+    /**
+     * Get the gene fasta by gene ID from the GTF file, and the FastaIndex
+     * Before fetching the sequence, the exons are stitched together after removing overlaps
+     */
     public Fasta getGeneFasta(String geneId, FastaIndex fastaIndex) {
         Feature gene = genes.get(geneId);
         if (gene == null) return null;
@@ -179,7 +190,9 @@ public class GTFReader {
         return new Fasta(geneIDs.indexOf(geneId), geneId, sequence);
     }
 
-    // Get the FASTA sequence for a transcript
+    /**
+     * Get the transcript fasta by transcript ID from the GTF file, and the FastaIndex
+     */
     public Fasta getTranscriptFasta(String transcriptId, FastaIndex fastaIndex) {
         Feature transcript = findFeatureById(transcriptId, "transcript");
         if (transcript == null) return null;
@@ -198,7 +211,9 @@ public class GTFReader {
         return new Fasta(transcriptIDs.indexOf(transcriptId), transcriptId, sequence);
     }
 
-    // Get the FASTA sequence for an exon
+    /**
+     * Get the exon fasta by exon ID from the GTF file, and the FastaIndex
+     */
     public Fasta getExonFasta(String exonId, FastaIndex fastaIndex) {
         Feature exon = findFeatureById(exonId, "exon");
         if (exon == null) return null;
@@ -212,7 +227,9 @@ public class GTFReader {
         return new Fasta(-1, exonId, sequence);
     }
 
-    // Get the FASTA sequence for a CDS
+    /**
+     * Get the CDS fasta by CDS ID from the GTF file, and the FastaIndex
+     */
     public Fasta getCDSFasta(String cdsId, FastaIndex fastaIndex) {
         Feature cds = findFeatureById(cdsId, "CDS");
         if (cds == null) return null;
@@ -222,40 +239,36 @@ public class GTFReader {
         if (cds.strand.equals("-")) {
             sequence = reverseComplement(sequence);
         }
-
         return new Fasta(-1, cdsId, sequence);
     }
 
-    // Utility to find a feature by ID and type
+    /**
+     * Find a feature by ID and type
+     */
     private Feature findFeatureById(String id, String type) {
-        switch (type.toLowerCase()) {
-            case "gene":
-                return genes.get(id);
-            case "transcript":
-                return genes.values().stream()
-                        .flatMap(g -> g.children.stream())
-                        .filter(t -> t.id.equals(id))
-                        .findFirst().orElse(null);
-            case "exon":
-                return genes.values().stream()
-                        .flatMap(g -> g.children.stream())
-                        .flatMap(t -> t.children.stream())
-                        .filter(f -> f.id.equals(id) && f.type.equals("exon"))
-                        .findFirst().orElse(null);
-            case "cds":
-                return genes.values().stream()
-                        .flatMap(g -> g.children.stream())
-                        .flatMap(t -> t.children.stream())
-                        .filter(f -> f.id.equals(id) && f.type.equals("CDS"))
-                        .findFirst().orElse(null);
-            default:
-                return null;
-        }
-
-
+        return switch (type.toLowerCase()) {
+            case "gene" -> genes.get(id);
+            case "transcript" -> genes.values().stream()
+                    .flatMap(g -> g.children.stream())
+                    .filter(t -> t.id.equals(id))
+                    .findFirst().orElse(null);
+            case "exon" -> genes.values().stream()
+                    .flatMap(g -> g.children.stream())
+                    .flatMap(t -> t.children.stream())
+                    .filter(f -> f.id.equals(id) && f.type.equals("exon"))
+                    .findFirst().orElse(null);
+            case "cds" -> genes.values().stream()
+                    .flatMap(g -> g.children.stream())
+                    .flatMap(t -> t.children.stream())
+                    .filter(f -> f.id.equals(id) && f.type.equals("CDS"))
+                    .findFirst().orElse(null);
+            default -> null;
+        };
     }
 
-    // Extract, stitch, and fetch sequences for a stream of features
+    /**
+     * Get the sequence of a feature by stitching together the sequences of its children
+     */
     private String getFeatureSequence(Stream<Feature> features, FastaIndex fastaIndex) {
         Feature[] stitchedFeatures = stitchOverlappingFeatures(
                 features.toArray(Feature[]::new)
@@ -266,7 +279,9 @@ public class GTFReader {
                 .reduce("", String::concat);
     }
 
-    // Stitch overlapping features
+    /**
+     * Stitch together overlapping features
+     */
     private Feature[] stitchOverlappingFeatures(Feature[] features) {
         if (features.length == 0) return new Feature[0];
 
@@ -288,40 +303,38 @@ public class GTFReader {
         return stitched.toArray(new Feature[0]);
     }
 
+    /**
+     * Get all features of a specific type on a specific sequence (chromosome)
+     */
     public Feature[] getFeatures(String sequenceName, String featureType) {
         // Get all features of a specific type on a specific sequence (chromosome)
-        switch (featureType.toLowerCase()) {
-            case "gene":
-                return genes.values().stream()
-                        .filter(g -> g.chrom.equals(sequenceName))
-                        .toArray(Feature[]::new);
-            case "transcript":
-                return genes.values().stream()
-                        .filter(g -> g.chrom.equals(sequenceName))
-                        .flatMap(g -> g.children.stream())
-                        .toArray(Feature[]::new);
-            case "exon":
-                return genes.values().stream()
-                        .filter(g -> g.chrom.equals(sequenceName))
-                        .flatMap(g -> g.children.stream())
-                        .flatMap(t -> t.children.stream())
-                        .filter(f -> f.type.equals("exon"))
-                        .toArray(Feature[]::new);
-            case "cds":
-                return genes.values().stream()
-                        .filter(g -> g.chrom.equals(sequenceName))
-                        .flatMap(g -> g.children.stream())
-                        .flatMap(t -> t.children.stream())
-                        .filter(f -> f.type.equals("CDS"))
-                        .toArray(Feature[]::new);
-            default:
-                return new Feature[0];
-        }
+        return switch (featureType.toLowerCase()) {
+            case "gene" -> genes.values().stream()
+                    .filter(g -> g.chrom.equals(sequenceName))
+                    .toArray(Feature[]::new);
+            case "transcript" -> genes.values().stream()
+                    .filter(g -> g.chrom.equals(sequenceName))
+                    .flatMap(g -> g.children.stream())
+                    .toArray(Feature[]::new);
+            case "exon" -> genes.values().stream()
+                    .filter(g -> g.chrom.equals(sequenceName))
+                    .flatMap(g -> g.children.stream())
+                    .flatMap(t -> t.children.stream())
+                    .filter(f -> f.type.equals("exon"))
+                    .toArray(Feature[]::new);
+            case "cds" -> genes.values().stream()
+                    .filter(g -> g.chrom.equals(sequenceName))
+                    .flatMap(g -> g.children.stream())
+                    .flatMap(t -> t.children.stream())
+                    .filter(f -> f.type.equals("CDS"))
+                    .toArray(Feature[]::new);
+            default -> new Feature[0];
+        };
     }
 
-
-
-    // Feature class representing any type of genomic feature
+    /**
+     * Feature class representing a GTF feature
+     */
     public static class Feature {
         String type;        // Type of feature (gene, transcript, exon, CDS, etc.)
         String chrom;       // Chromosome
@@ -373,14 +386,12 @@ public class GTFReader {
             return strand;
         }
 
-
         @Override
         public String toString() {
             return String.format("%s [%s:%d-%d, %s, id=%s, parent=%s, children=%d]",
                     type, chrom, start, end, strand, id, parent != null ? parent.id : "null", children.size());
         }
     }
-
 
     /**
      * Iterater over the genes
@@ -399,5 +410,5 @@ public class GTFReader {
         }
         return transcripts;
     }
-
 }
+// EOF
