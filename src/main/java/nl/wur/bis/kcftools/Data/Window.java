@@ -15,6 +15,7 @@ public class Window implements Comparable<Window> {
     String sequenceName;
     int start;
     int end;
+    int effLength;
     int totalKmers;
     HashMap<String, Data> data;
     int minObservedKmers;
@@ -27,43 +28,30 @@ public class Window implements Comparable<Window> {
     float maxScore;
     float meanScore;
 
-    public Window(String windowId, String sequenceName, int start, int end, int totalKmers, String[] samples){
-        this.windowId = windowId;
-        this.sequenceName = sequenceName;
-        this.start = start;
-        this.end = end;
-        this.totalKmers = totalKmers;
-        this.data = new LinkedHashMap<>();
-        for (String sample : samples){
-            data.put(sample, new Data(0, 0, 0, totalKmers));
-        }
-    }
-
-    public Window(String windowId, String sequenceName, int start, int end, int totalKmers){
-        this.windowId = windowId;
-        this.sequenceName = sequenceName;
-        this.start = start;
-        this.end = end;
-        this.totalKmers = totalKmers;
-        this.data = new LinkedHashMap<>();
-    }
 
     public Window(String windowId, String sequenceName, int start, int end){
         this.windowId = windowId;
         this.sequenceName = sequenceName;
         this.start = start;
         this.end = end;
+        this.effLength = 0;
         this.totalKmers = 0;
         this.data = new LinkedHashMap<>();
     }
 
-    public void addData(String sample, int observedKmers, int variations, int kmerDistance) {
-        Data d = data.computeIfAbsent(sample, k -> new Data());
-        d.observedKmers = observedKmers;
-        d.variations = variations;
-        d.kmerDistance = kmerDistance;
-        d.score = d.computeScore(totalKmers);
-        data.put(sample, d);
+    public Window(String[] fields, String[] samples){
+        this.windowId = fields[3];
+        this.sequenceName = fields[0];
+        this.start = Integer.parseInt(fields[1]);
+        this.end = Integer.parseInt(fields[2]);
+        this.totalKmers = Integer.parseInt(fields[4]);
+        this.effLength = Integer.parseInt(getInfoFieldMap(fields[5]).get("EFFLEN"));
+        this.data = new LinkedHashMap<>();
+        for (int i = 7; i < fields.length; i++){
+            String[] sampleData = fields[i].split(":");
+            // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:score
+            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), totalKmers, effLength, sampleData[0]));
+        }
     }
 
     public void addData(HashMap<String, Data> data){
@@ -76,12 +64,13 @@ public class Window implements Comparable<Window> {
         }
     }
 
-    public synchronized void addData(String sample, int observedKmers, int variations, int kmerDistance, String ibs) {
-        Data d = data.computeIfAbsent(sample, k -> new Data());
+    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int tailDistance, String ibs) {
+        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0, totalKmers, effLength));
         d.observedKmers = observedKmers;
         d.variations = variations;
-        d.kmerDistance = kmerDistance;
-        d.score = d.computeScore(totalKmers);
+        d.innerDistance = innerDistance;
+        d.tailDistance = tailDistance;
+        d.score = d.computeScore(totalKmers, effLength);
         d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
 
@@ -103,7 +92,8 @@ public class Window implements Comparable<Window> {
 
     private String getInfoField() {
         calculateStats();
-        return "IS=" + String.format("%.2f", minScore) + ";" +
+        return "EFFLEN=" + effLength + ";" +
+                "IS=" + String.format("%.2f", minScore) + ";" +
                 "XS=" + String.format("%.2f", maxScore) + ";" +
                 "MS=" + String.format("%.2f", meanScore) + ";" +
                 "IO=" + minObservedKmers + ";" +
@@ -114,8 +104,21 @@ public class Window implements Comparable<Window> {
                 "MV=" + meanVariations;
     }
 
+    private HashMap<String, String> getInfoFieldMap(String infoField) {
+        HashMap<String, String> info = new LinkedHashMap<>();
+        String[] fields = infoField.split(";");
+        for (int i = 0; i < fields.length; i++){
+            fields[i] = fields[i].replace(";", "");
+        }
+        for (String field : fields){
+            String[] kv = field.split("=");
+            info.put(kv[0], kv[1]);
+        }
+        return info;
+    }
+
     private String getFormatField() {
-        return "GT:VA:OB:DI:SC";
+        return "GT:VA:OB:ID:TD:SC";
     }
 
     public void calculateStats(){
@@ -257,6 +260,14 @@ public class Window implements Comparable<Window> {
     public String toTSV(String sample) {
         // return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
         return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
+    }
+
+    public void setEffLength(int atgcCount) {
+        this.effLength = atgcCount;
+    }
+
+    public int getEffLength() {
+        return effLength;
     }
 }
 // EOF
