@@ -88,7 +88,7 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                     scoreWriter.write("\t" + String.format("%.2f", window.getScore(sample)));
                 }
                 totWriter.write(window.getWindowId() + "\t" + window.getTotalKmers());
-                winlen.write(window.getWindowId() + "\t" + window.length());
+                winlen.write(window.getWindowId() + "\t" + window.getEffLength());
                 obsWriter.newLine();
                 varWriter.newLine();
                 scoreWriter.newLine();
