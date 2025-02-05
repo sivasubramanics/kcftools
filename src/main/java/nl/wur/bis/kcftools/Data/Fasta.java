@@ -215,4 +215,33 @@ public class Fasta implements Serializable {
             return mers;
         }
     }
+
+    public int getEffectiveATGCCount(int kmerLength) {
+        synchronized (lock) {
+            int count = 0;
+            int stretchLength = 0; // Track the length of consecutive ATGC stretch
+
+            for (int i = 0; i < sequence.length(); i++) {
+                char base = Character.toUpperCase(sequence.charAt(i));
+
+                // Check if the base is one of A, T, G, C
+                if (base == 'A' || base == 'T' || base == 'G' || base == 'C') {
+                    stretchLength++;
+                } else {
+                    // End of a stretch: check if it's long enough
+                    if (stretchLength >= kmerLength) {
+                        count += stretchLength;
+                    }
+                    stretchLength = 0; // Reset stretch length
+                }
+            }
+
+            // Handle the last stretch, if the sequence ends with ATGC
+            if (stretchLength >= kmerLength) {
+                count += stretchLength;
+            }
+
+            return count;
+        }
+    }
 }
