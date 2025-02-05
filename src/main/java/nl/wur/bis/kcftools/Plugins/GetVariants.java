@@ -186,8 +186,12 @@ public class GetVariants implements Callable<Integer>, Runnable {
         int localTotalKmers = 0;
         int localObservedKmers = 0;
         int localVariation = 0;
-        int localDistance = 0;
+//        int localDistance = 0;
+        int localInnerDistance = 0;
+        int localTailDistance = 0;
         int gapSize = 0;
+        boolean isTail = true;
+//        int tailGap = 0;
 
         if (fasta == null) {
             HelperFunctions.log("error", CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
@@ -201,15 +205,22 @@ public class GetVariants implements Callable<Integer>, Runnable {
                 Kmer km = new Kmer(k, kmc.isBothStrands());
 
                 if (kmc.isExist(km)) {
+                    // if the kmer exists in the KMC database, 1+ observed kmers
                     localObservedKmers++;
                     if (gapSize > 0) {
+                        // if there is a gap, increment the variation
                         localVariation++;
-                        int distance = gapSize - (kmc.getKmerLength() - 1);
-                        if (distance <= 0) {
-                            distance = Math.abs(distance + 1);
+                        // if the gap is at the beginning or end of the window, increment the distance
+                        if (isTail) {
+                            localTailDistance += gapSize;
+//                            localDistance += gapSize;
                         }
-                        localDistance += distance;
+                        else {
+                            // if the gap is in the middle of the window, calculate the distance based on the gap size and kmer size
+                            localInnerDistance += getDistance(kmc, gapSize);
+                        }
                     }
+                    isTail = false;
                     gapSize = 0;
                 } else {
                     gapSize++;
@@ -219,20 +230,30 @@ public class GetVariants implements Callable<Integer>, Runnable {
             // Process the last gap if it exists
             if (gapSize > 0) {
                 localVariation++;
-                int distance = gapSize - (kmc.getKmerLength() - 1);
-                if (distance <= 0) {
-                    distance = Math.abs(distance + 1);
-                }
-                localDistance += distance;
+//                localDistance += gapSize;
+                localTailDistance += gapSize;
             }
         }
 
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
-            window.addData(sampleName, localObservedKmers, localVariation, localDistance, "N");
+            window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N");
         }
 
         return window;
+    }
+
+    /***
+     * Get the distance based on the gap size
+     * if the actual missing base is 1, and the kmer size is 3, we will have 3 missing kmers, hence the distance is 1 (3 - (3-1)) = 1
+     */
+    private static int getDistance(KMC kmc, int gapSize) {
+        int distance = gapSize - (kmc.getKmerLength() - 1);
+        if (distance <= 0) {
+            distance = Math.abs(distance + 1);
+        }
+        return distance;
     }
 
     /***
