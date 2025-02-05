@@ -100,46 +100,6 @@ public class GTFReader {
     }
 
     /**
-     * Iterate over the exons of a gene
-     */
-    public Iterable<Feature> getExons(String transcriptName) {
-        String geneId = transcriptToGene.get(transcriptName);
-        if (geneId != null) {
-            Feature gene = genes.get(geneId);
-            if (gene != null) {
-                for (Feature transcript : gene.children) {
-                    if (transcript.id.equals(transcriptName)) {
-                        return transcript.children.stream()
-                                .filter(f -> f.type.equals("exon"))
-                                .toList();
-                    }
-                }
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    /**
-     * Iterate over all CDS features of a transcript
-     */
-    public Iterable<Feature> getCDSs(String transcriptName) {
-        String geneId = transcriptToGene.get(transcriptName);
-        if (geneId != null) {
-            Feature gene = genes.get(geneId);
-            if (gene != null) {
-                for (Feature transcript : gene.children) {
-                    if (transcript.id.equals(transcriptName)) {
-                        return transcript.children.stream()
-                                .filter(f -> f.type.equals("CDS"))
-                                .toList();
-                    }
-                }
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    /**
      * Extract an attribute value from the attributes string
      */
     private String extractAttribute(String attributes, String key) {
@@ -174,11 +134,9 @@ public class GTFReader {
         Feature gene = genes.get(geneId);
         if (gene == null) return null;
 
-        // Extract, stitch, and fetch sequences for all exons of the gene
+        // Extract, gene start and end and fetch sequences
         String sequence = getFeatureSequence(
-                gene.children.stream()
-                        .flatMap(t -> t.children.stream())
-                        .filter(f -> f.type.equals("exon")),
+                Stream.of(gene),
                 fastaIndex
         );
 
