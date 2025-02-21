@@ -59,13 +59,15 @@ public class GTFReader {
                     genes.putIfAbsent(geneId, feature);
                     geneIDs.add(geneId);
                 } else if (type.equals("transcript")) {
-                    Feature gene = genes.get(geneId);
-                    if (gene != null) {
-                        feature.parent = gene;
-                        gene.addChild(feature);
-                        transcriptToGene.put(transcriptId, geneId); // Map transcript to its parent gene
-                        transcriptIDs.add(transcriptId);
+                    if (!genes.containsKey(geneId)) {
+                        Feature geneFeature = new Feature(type, chrom, start, end, strand, geneId);
+                        genes.putIfAbsent(geneId, geneFeature);
                     }
+                    Feature gene = genes.get(geneId);
+                    feature.parent = gene;
+                    gene.addChild(feature);
+                    transcriptToGene.put(transcriptId, geneId); // Map transcript to its parent gene
+                    transcriptIDs.add(transcriptId);
                 } else { // For exons, CDS, etc.
                     String parentGeneId = transcriptToGene.get(transcriptId);
                     if (parentGeneId != null) {
@@ -88,6 +90,10 @@ public class GTFReader {
                 for (Feature transcript : gene.children) {
                     transcript.sortChildrenByStart();
                 }
+                int geneStart = gene.children.get(0).start;
+                int geneEnd = gene.children.get(gene.children.size() - 1).end;
+                gene.start = geneStart;
+                gene.end = geneEnd;
             }
         }
 
