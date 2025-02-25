@@ -183,39 +183,6 @@ public class Fasta implements Serializable {
         return base == 'A' || base == 'C' || base == 'G' || base == 'T';
     }
 
-    public Set<Kmer> getKmersSet(int kmerLength, int prefixLength, boolean useCanonical) {
-        synchronized (lock) {
-            Set<Kmer> mers = new java.util.HashSet<>();
-            char[] kmerChars = new char[kmerLength];
-            Kmer kmer = null;
-
-            int validStart = 0;
-            for (int i = 0; i < sequence.length(); i++) {
-                char base = Character.toUpperCase(sequence.charAt(i));
-                if (!isValidBase(base)) {
-                    validStart = i + 1;
-                    kmer = null;
-                    continue;
-                }
-
-                int offset = i - validStart;
-                if (offset < kmerLength) {
-                    kmerChars[offset] = base;
-                    if (offset == kmerLength - 1) {
-                        kmer = new Kmer(kmerChars, prefixLength, useCanonical);
-                    }
-                } else if (kmer != null) {
-                    kmer = kmer.insertBase(base);
-                }
-
-                if (kmer != null) {
-                    mers.add(kmer);
-                }
-            }
-            return mers;
-        }
-    }
-
     public int getEffectiveATGCCount(int kmerLength) {
         synchronized (lock) {
             int count = 0;
