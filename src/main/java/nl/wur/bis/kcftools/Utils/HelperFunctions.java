@@ -226,7 +226,7 @@ public class HelperFunctions {
                 }
             }
         } catch (IOException e) {
-            log("error", CLASS_NAME, "Error checking if " + toolName + " is installed");
+            Logger.error(CLASS_NAME, "Error checking if " + toolName + " is installed");
         }
         return false;
     }
@@ -261,33 +261,6 @@ public class HelperFunctions {
             sb.append("\n");
         }
         return sb.toString();
-    }
-
-
-    /*** TEMPORARY
-     * Log a message to the console
-     */
-    public static void log(String logType, String className, String message) {
-
-        // if the classname is not having 20 characters, add spaces to make it 20 characters
-        if (className.length() < 20) {
-            className = className + " ".repeat(20 - className.length());
-        }
-        String timeString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date());
-        if (logType.equals("info")) {
-            System.out.println(timeString + " - INFO    - " + className + " - " + message);
-        } else if (logType.equals("error")) {
-            System.out.println(timeString + " - ERROR   - " + className + " - " + message);
-            System.exit(1);
-        } else if (logType.equals("warning")) {
-            System.out.println(timeString + " - WARNING - " + className + " - " + message);
-        } else if (logType.equals("debug")) {
-            if (System.getProperty("DEBUG") != null) {
-                System.out.println(timeString + " - DEBUG   - " + className + " - " + message);
-        }
-    } else {
-            System.out.println(timeString + " - UNKNOWN - " + className + " - " + message);
-        }
     }
 
     /***
@@ -333,7 +306,7 @@ public class HelperFunctions {
         try {
             Files.delete(Path.of(inFile));
         } catch (IOException e) {
-            log("error", CLASS_NAME, "Error deleting file: " + inFile);
+            Logger.error(CLASS_NAME, "Error deleting file: " + inFile);
         }
     }
 
@@ -448,7 +421,7 @@ public class HelperFunctions {
     public static void printCommandLine(CommandLine commandLine, String className) {
         String name;
         String value;
-        log("info", className, "========== CMD options - " + className + " ==========");
+        Logger.info(className, "========== CMD options - " + className + " ==========");
         for (CommandLine.Model.OptionSpec option : commandLine.getCommandSpec().options()) {
             if (option.isOption()) {
                 // get long name of the command
@@ -463,10 +436,10 @@ public class HelperFunctions {
                     continue;
                 }
                 value = option.getValue().toString();
-                log("info", className, String.format("%-15s: %s", name, value));
+                Logger.info(className, String.format("%-15s: %s", name, value));
             }
         }
-        log("info", className, "==================================================");
+        Logger.info(className, "==================================================");
     }
 
     /***
@@ -479,12 +452,13 @@ public class HelperFunctions {
         long freeMemory = runtime.freeMemory();
         long usedMemory = allocatedMemory - freeMemory;
 
-        HelperFunctions.log("info", CLASS_NAME, "============= Memory Usage Statistics ============");
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Max Memory (GB)", maxMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Allocated Memory (GB)", allocatedMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Free Memory (GB)", freeMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %.2f", "Used Memory (GB)", usedMemory / (1024.0 * 1024 * 1024)));
-        HelperFunctions.log("info", CLASS_NAME, "==================================================");
+        Logger.info(CLASS_NAME, "============= Memory Usage Statistics ============");
+        Logger.info(CLASS_NAME, String.format("%-25s: %.2f", "Max Memory (GB)", maxMemory / (1024.0 * 1024 * 1024)));
+        Logger.info(CLASS_NAME, String.format("%-25s: %.2f", "Allocated Memory (GB)", allocatedMemory / (1024.0 * 1024 * 1024)));
+        Logger.info(CLASS_NAME, String.format("%-25s: %.2f", "Free Memory (GB)", freeMemory / (1024.0 * 1024 * 1024)));
+        Logger.info(CLASS_NAME, String.format("%-25s: %.2f", "Used Memory (GB)", usedMemory / (1024.0 * 1024 * 1024)));
+        Logger.info(CLASS_NAME, "==================================================");
+
     }
 }
 // EOF

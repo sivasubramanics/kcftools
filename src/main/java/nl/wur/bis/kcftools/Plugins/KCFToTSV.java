@@ -4,17 +4,17 @@ package nl.wur.bis.kcftools.Plugins;
 import nl.wur.bis.kcftools.Data.KCFHeader;
 import nl.wur.bis.kcftools.Data.KCFReader;
 import nl.wur.bis.kcftools.Data.Window;
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.concurrent.Callable;
 
 @Command(name = "kcf2tsv", description = "Convert KCF file to TSV file (IBSpy like)")
 public class KCFToTSV implements Callable<Integer>, Runnable {
+    private final String CLASSNAME = this.getClass().getSimpleName();
     @Option(names = {"-i", "--input"}, description = "KCF file name", required = true)
     private String kcfFile;
     @Option(names = {"-o", "--output"}, description = "Output file name Prefix", required = true)
@@ -58,7 +58,7 @@ public class KCFToTSV implements Callable<Integer>, Runnable {
             }
             if (sampleName != null) {
                 if (!header.hasSample(sampleName)) {
-                    HelperFunctions.log("error", "KCFToTSV", "Sample " + sampleName + " not found in KCF file");
+                    Logger.error(CLASSNAME, "Sample " + sampleName + " not found in KCF file");
                 }
                 querySamples = new String[]{sampleName};
             }

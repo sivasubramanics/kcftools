@@ -4,7 +4,7 @@ import nl.wur.bis.kcftools.Data.Fasta;
 import nl.wur.bis.kcftools.Data.FastaIndex;
 import nl.wur.bis.kcftools.Data.KMC;
 import nl.wur.bis.kcftools.Data.Kmer;
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedReader;
@@ -115,18 +115,18 @@ public class CompareIBS implements Callable<Integer>, Runnable {
         int[] stats = new int[]{0, 0, 0, 0};
         // get fasta for refOne for the start and end
         if (!indexOne.containsSequence(refOneFields[2])) {
-            HelperFunctions.log("error", "CompareIBS", "Sequence " + refOneFields[2] + " not found in reference one");
+            Logger.error("CompareIBS", "Sequence " + refOneFields[2] + " not found in reference one");
         }
-        HelperFunctions.log("info", "CompareIBS", "Comparing " + refOneFields[2] + " and " + refTwoFields[2]);
+        Logger.info("CompareIBS", "Comparing " + refOneFields[2] + " and " + refTwoFields[2]);
         Fasta fastaOne = new Fasta(Integer.parseInt(refOneFields[0]) , refOneFields[2], indexOne.getSequence(refOneFields[2], Integer.parseInt(refOneFields[3]), Integer.parseInt(refOneFields[5])));
         List<Kmer> kmersOne = fastaOne.getKmersList(kmc.getKmerLength(), kmc.getPrefixLength(), false);
         stats[0] = kmersOne.size();
         Fasta fastaTwo = new Fasta(Integer.parseInt(refTwoFields[0]) , refTwoFields[2], indexTwo.getSequence(refTwoFields[2], Integer.parseInt(refTwoFields[3]), Integer.parseInt(refTwoFields[5])));
         List<Kmer> kmersTwo = fastaTwo.getKmersList(kmc.getKmerLength(), kmc.getPrefixLength(), false);
         stats[1] = kmersTwo.size();
-        HelperFunctions.log("info", "CompareIBS", "Total kmers " + kmersOne.size() + " and " + kmersTwo.size());
+        Logger.info("CompareIBS", "Total kmers " + kmersOne.size() + " and " + kmersTwo.size());
         List<Kmer> commonKmers = getUniqueCommonKmersSorted(kmersOne, kmersTwo);
-        HelperFunctions.log("info", "CompareIBS", "Common kmers " + commonKmers.size());
+        Logger.info("CompareIBS", "Common kmers " + commonKmers.size());
         stats[2] = commonKmers.size();
         for (Kmer kmer: commonKmers) {
             if (kmc.isExist(kmer)) {

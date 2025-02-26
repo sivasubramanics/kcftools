@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 
 import java.io.*;
 import java.util.*;
@@ -15,6 +15,8 @@ public class GTFReader {
     private ArrayList<String> geneIDs;
     private ArrayList<String> transcriptIDs;
 
+    private String CLASSNAME = this.getClass().getSimpleName();
+
     public GTFReader() {
     }
 
@@ -28,7 +30,7 @@ public class GTFReader {
 
     // Reads a GTF file and builds the hierarchical structure
     public void readGTF(String filePath) throws IOException {
-        HelperFunctions.log("info", "GTFReader", "Reading GTF file: " + filePath);
+        Logger.info(CLASSNAME, "Reading GTF file: " + filePath);
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -96,12 +98,11 @@ public class GTFReader {
                 gene.end = geneEnd;
             }
         }
-
-        HelperFunctions.log("info", "GTFReader", "Finished reading GTF file: " + filePath);
+        Logger.info(CLASSNAME, "Finished reading GTF file: " + filePath);
         if (genes.isEmpty()) {
-            HelperFunctions.log("warn", "GTFReader", "No 'gene' features found in GTF file: " + filePath);
-            HelperFunctions.log("warn", "GTFReader", "Please check the GTF file format, else fix them using agat");
-            HelperFunctions.log("error", "GTFReader", "Exiting the program");
+            Logger.warning(CLASSNAME, "No 'gene' features found in GTF file: " + filePath);
+            Logger.warning(CLASSNAME, "Please check the GTF file format, else fix them using agat");
+            Logger.error(CLASSNAME, "Exiting the program");
         }
     }
 

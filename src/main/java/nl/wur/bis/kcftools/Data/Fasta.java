@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static nl.wur.bis.kcftools.Utils.HelperFunctions.fold_seq;
 

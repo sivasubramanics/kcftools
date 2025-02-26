@@ -5,6 +5,7 @@ import nl.wur.bis.kcftools.Data.KCFReader;
 import nl.wur.bis.kcftools.Data.KCFWriter;
 import nl.wur.bis.kcftools.Data.Window;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedReader;
@@ -30,7 +31,7 @@ public class Cohort implements Callable<Integer>, Runnable {
     @Override
     public Integer call() throws Exception {
         if (inFiles == null && listFile == null) {
-            HelperFunctions.log("error", CLASS_NAME, "No input files provided");
+            Logger.error(CLASS_NAME, "No input files provided");
         }
 
         if (listFile != null) {
@@ -72,7 +73,7 @@ public class Cohort implements Callable<Integer>, Runnable {
                     tmpHeader = reader.getHeader();
                     assert header != null;
                     if(!header.equals(tmpHeader)) {
-                        HelperFunctions.log("error", CLASS_NAME, "Headers mismatch found in sample: " + inFiles[i]);
+                        Logger.error(CLASS_NAME, "Headers mismatch found in sample: " + inFiles[i]);
                     }
                     header.mergeHeader(tmpHeader);
                     for (Window window : reader) {
@@ -80,12 +81,12 @@ public class Cohort implements Callable<Integer>, Runnable {
                         if (windows.containsKey(key)) {
                             windows.get(key).addData(window.getData());
                         } else {
-                            HelperFunctions.log("error", CLASS_NAME, "Windows mismatch found in sample: " + inFiles[i] + " at window: " + window);
+                            Logger.error(CLASS_NAME, "Windows mismatch found in sample: " + inFiles[i] + " at window: " + window);
                         }
                     }
                 }
             } catch (Exception e) {
-                HelperFunctions.log("error", CLASS_NAME, "Error reading KCF file: " + inFiles[i]);
+                Logger.error(CLASS_NAME, "Error reading KCF file: " + inFiles[i]);
             }
         }
 

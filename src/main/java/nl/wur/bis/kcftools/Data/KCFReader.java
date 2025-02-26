@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -22,7 +22,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
     public KCFReader(String filename) {
         this.filename = filename;
         this.header = null;
-        HelperFunctions.log("info", CLASS_NAME, "Reading KCF file: " + filename);
+        Logger.info(CLASS_NAME, "Reading KCF file:" + filename);
     }
 
     public KCFHeader getHeader() {
@@ -90,7 +90,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
                 nextLine = reader.readLine();
                 return window;
             } catch (IOException e) {
-                HelperFunctions.log("error", CLASS_NAME, "Error reading KCF file: " + filename);
+                Logger.error(CLASS_NAME, "Error reading KCF file: " + filename);
                 throw new RuntimeException("Error reading KCF file", e);
             }
         }

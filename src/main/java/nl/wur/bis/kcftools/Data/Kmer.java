@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -228,7 +228,7 @@ public class Kmer implements Comparable<Kmer> {
             case 0b10 -> 'G';
             case 0b11 -> 'T';
             default -> {
-                HelperFunctions.log("error", this.getClass().getName(), "Invalid base index: " + baseIndex);
+                Logger.error(CLASS_NAME, "Invalid base index: " + baseIndex);
                 throw new IllegalArgumentException("Invalid base index: " + baseIndex);
             }
         };
@@ -253,7 +253,7 @@ public class Kmer implements Comparable<Kmer> {
 
             // Check if the current signature is within the allowed range
             if (currentSignature >= (1 << (2 * signatureLength))) {
-                HelperFunctions.log("error", CLASS_NAME, "Invalid signature (out of range): " + currentSignature);
+                Logger.error(CLASS_NAME, "Invalid signature (out of range): " + currentSignature);
             }
 
             // Check if the signature is valid
@@ -366,7 +366,7 @@ public class Kmer implements Comparable<Kmer> {
      */
     public Kmer insertBase(char base) {
         if (this.isCanonical) {
-            HelperFunctions.log("error", this.getClass().getName(), "Cannot insert base into canonical kmer");
+            Logger.error(CLASS_NAME, "Cannot insert base into canonical kmer");
             throw new IllegalArgumentException("Cannot insert base into canonical kmer");
         }
 

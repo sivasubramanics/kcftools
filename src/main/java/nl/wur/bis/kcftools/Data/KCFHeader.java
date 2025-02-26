@@ -2,6 +2,7 @@ package nl.wur.bis.kcftools.Data;
 
 import nl.wur.bis.kcftools.Utils.Configs;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -13,6 +14,7 @@ import java.util.*;
  */
 public class KCFHeader implements Comparable<KCFHeader> {
 
+    private final String CLASSNAME = this.getClass().getSimpleName();
     private String version;
     private String source;
     private final String date;
@@ -237,19 +239,19 @@ public class KCFHeader implements Comparable<KCFHeader> {
         if (o == null || getClass() != o.getClass()) return false;
         KCFHeader kcfHeader = (KCFHeader) o;
         if (getWindowSize() != kcfHeader.getWindowSize()) {
-            HelperFunctions.log("error", "KCFHeader", "Window size mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Window size mismatch between the KCFs");
             return false;
         }
         if (getKmerSize() != kcfHeader.getKmerSize()) {
-            HelperFunctions.log("error", "KCFHeader", "Kmer size mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Kmer size mismatch between the KCFs");
             return false;
         }
         if (isIBS() != kcfHeader.isIBS()) {
-            HelperFunctions.log("error", "KCFHeader", "IBS processing mismatch between the KCFs");
+            Logger.error(CLASSNAME, "IBS processing mismatch between the KCFs");
             return false;
         }
         if (getWindowCount() != kcfHeader.getWindowCount()) {
-            HelperFunctions.log("error", "KCFHeader", "Number of windows mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Number of windows mismatch between the KCFs");
             return false;
         }
         return true;
@@ -264,22 +266,22 @@ public class KCFHeader implements Comparable<KCFHeader> {
     public int compareTo(@NotNull KCFHeader o) {
         int winCompare = Integer.compare(this.getWindowSize(), o.getWindowSize());
         if (winCompare != 0) {
-            HelperFunctions.log("error", "KCFHeader", "Window size mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Window size mismatch between the KCFs");
             return winCompare;
         }
         int kmerCompare = Integer.compare(this.getKmerSize(), o.getKmerSize());
         if (kmerCompare != 0) {
-            HelperFunctions.log("error", "KCFHeader", "Kmer size mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Kmer size mismatch between the KCFs");
             return kmerCompare;
         }
         int nwinCompare = Integer.compare(this.getWindowCount(), o.getWindowCount());
         if (nwinCompare != 0) {
-            HelperFunctions.log("error", "KCFHeader", "Number of windows mismatch between the KCFs");
+            Logger.error(CLASSNAME, "Number of windows mismatch between the KCFs");
             return nwinCompare;
         }
         int ibsCompare = Boolean.compare(this.isIBS(), o.isIBS());
         if (ibsCompare != 0) {
-            HelperFunctions.log("error", "KCFHeader", "IBS processing mismatch between the KCFs");
+            Logger.error(CLASSNAME, "IBS processing mismatch between the KCFs");
             return ibsCompare;
         }
         return 0;
@@ -287,7 +289,7 @@ public class KCFHeader implements Comparable<KCFHeader> {
 
     public void mergeHeader(KCFHeader tmpHeader) {
         if (!this.equals(tmpHeader)){
-            HelperFunctions.log("error", "KCFHeader", "Headers mismatch found in the KCF files");
+            Logger.error(CLASSNAME, "Headers mismatch found in the KCF files");
         }
         if (tmpHeader.getSamples() != null){
             addSample(tmpHeader.getSamples());
