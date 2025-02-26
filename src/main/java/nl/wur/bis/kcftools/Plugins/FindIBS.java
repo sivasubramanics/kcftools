@@ -2,6 +2,7 @@ package nl.wur.bis.kcftools.Plugins;
 
 import nl.wur.bis.kcftools.Data.*;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedWriter;
@@ -96,7 +97,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
             int winNum = 0;
             for (Window window: windowsList.get(chromName)) {
                 if (window == null) {
-                    HelperFunctions.log("error", CLASS_NAME, "Window not found in index: " + chromName);
+                    Logger.error(CLASS_NAME, "Window not found in index: " + chromName);
                     continue;
                 }
                 windows.get(chromName)[winNum] = window;
@@ -106,7 +107,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
         String[] samples = header.getSamples();
         for (String sample : samples) {
-            HelperFunctions.log("info", CLASS_NAME, "Finding IBS for sample: " + sample);
+            Logger.info(CLASS_NAME, "Finding IBS for sample: " + sample);
             int blockNum = 0;
             String blockChrom = null;
             boolean firstIBSFound = false;
@@ -120,7 +121,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
                     Window window = chromWindows[i];
 
                     if (window == null) {
-                        HelperFunctions.log("error", CLASS_NAME, "Window not found in index: " + chromName + ":" + i);
+                        Logger.error(CLASS_NAME, "Window not found in index: " + chromName + ":" + i);
                         continue;
                     }
 

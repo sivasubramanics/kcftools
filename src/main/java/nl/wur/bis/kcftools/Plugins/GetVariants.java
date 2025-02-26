@@ -2,6 +2,7 @@ package nl.wur.bis.kcftools.Plugins;
 
 import nl.wur.bis.kcftools.Data.*;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
@@ -92,8 +93,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         else{
             model = "wholegenome";
         }
-
-        HelperFunctions.log("info", CLASS_NAME, "Generating windows...");
+        Logger.info(CLASS_NAME, "Generating windows...");
         for (String name : index.getSequenceNames()) {
             header.addContig(name, index.getSequenceLength(name));
             Queue<Window> windows = getWindows(name);
@@ -101,7 +101,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         }
 
         int totalWindows = windowsMap.values().stream().mapToInt(Queue::size).sum();
-        HelperFunctions.log("info", CLASS_NAME, "Number of windows: " + totalWindows);
+        Logger.info(CLASS_NAME, "Number of windows: " + totalWindows);
 
         LinkedHashMap<String, List<Window>> processedWindows = new LinkedHashMap<>();
         AtomicInteger completedWindows = new AtomicInteger(0);
@@ -173,7 +173,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
             case "wholegenome" -> window.getFasta(index);
             case "targeted" -> gtfReader.getFasta(window.getWindowId(), featureType, index);
             default -> {
-                HelperFunctions.log("error", CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
+                Logger.error(CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
                 yield null;
             }
         };
@@ -194,7 +194,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
 //        int tailGap = 0;
 
         if (fasta == null) {
-            HelperFunctions.log("error", CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
+            Logger.error(CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
             return window;
         }
         List<Kmer> kmers = fasta.getKmersList(kmc.getKmerLength(), kmc.getPrefixLength(), false);
@@ -279,7 +279,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
                     windows.add(new Window(feature.getId(), sequenceName, feature.getStart(), feature.getEnd()));
                 }
             }
-            default -> HelperFunctions.log("error", CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
+            default -> Logger.error(CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
         }
         return windows;
     }
@@ -290,25 +290,25 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private void validateCMD() {
         if(gtfFile != null && gtfFile.isEmpty()){
             if (windowSize > 0) {
-                HelperFunctions.log("error", CLASS_NAME, "Window size is not valid for targeted model");
+                Logger.error(CLASS_NAME, "Window size is not valid for targeted model");
             }
             if (featureType == null) {
-                HelperFunctions.log("error", CLASS_NAME, "Feature type (gene or transcript) is required for targeted model");
+                Logger.error(CLASS_NAME, "Feature type (gene or transcript) is required for targeted model");
             }
             if (!featureType.equals("gene") && !featureType.equals("transcript")) {
-                HelperFunctions.log("error", CLASS_NAME, "Invalid feature type: " + featureType + ". Supported feature types are 'gene' and 'transcript'");
+                Logger.error(CLASS_NAME, "Invalid feature type: " + featureType + ". Supported feature types are 'gene' and 'transcript'");
             }
         }
         if (featureType != null && !featureType.isEmpty()) {
             if (gtfFile == null) {
-                HelperFunctions.log("error", CLASS_NAME, "GTF file is required for targeted model");
+                Logger.error(CLASS_NAME, "GTF file is required for targeted model");
             }
         }
         if (windowSize <= 0 && gtfFile == null) {
-            HelperFunctions.log("error", CLASS_NAME, "Window size (for wholegenome model) or GTF file (for targeted model) is required");
+            Logger.error(CLASS_NAME, "Window size (for wholegenome model) or GTF file (for targeted model) is required");
         }
         if (nThreads <= 0) {
-            HelperFunctions.log("error", CLASS_NAME, "Number of threads should be greater than 0");
+            Logger.error(CLASS_NAME, "Number of threads should be greater than 0");
         }
     }
 }

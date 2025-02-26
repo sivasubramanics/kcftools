@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -11,6 +11,7 @@ import java.util.Objects;
  * Class to represent a window in the KCF file
  */
 public class Window implements Comparable<Window> {
+    private final String CLASSNAME = this.getClass().getSimpleName();
     String windowId;
     String sequenceName;
     int start;
@@ -57,7 +58,7 @@ public class Window implements Comparable<Window> {
     public void addData(HashMap<String, Data> data){
         for (String sample : data.keySet()){
             if (this.data.containsKey(sample)){
-                HelperFunctions.log("error", "Window", "Sample " + sample + " already exists in window " + windowId);
+                Logger.error(CLASSNAME, "Sample " + sample + " already exists in window " + windowId);
             } else {
                 this.data.put(sample, data.get(sample));
             }

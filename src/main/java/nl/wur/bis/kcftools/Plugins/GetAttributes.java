@@ -3,7 +3,7 @@ package nl.wur.bis.kcftools.Plugins;
 import nl.wur.bis.kcftools.Data.KCFHeader;
 import nl.wur.bis.kcftools.Data.KCFReader;
 import nl.wur.bis.kcftools.Data.Window;
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedWriter;
@@ -59,7 +59,7 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                 BufferedWriter scoreWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".score.tsv"));
              BufferedWriter totWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".totalkmers.tsv"));
              BufferedWriter winlen = new BufferedWriter(new java.io.FileWriter(outFile + ".winlen.tsv"))){
-            HelperFunctions.log("info", CLASS_NAME, "Reading KCF file: " + kcfFile);
+            Logger.info(CLASS_NAME, "Reading KCF file: " + kcfFile);
             KCFHeader header = reader.getHeader();
             String[] samples = header.getSamples();
             int nWindows = header.getWindowCount();

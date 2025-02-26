@@ -1,6 +1,7 @@
 package nl.wur.bis.kcftools.Data;
 
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -78,9 +79,9 @@ public class KMC implements AutoCloseable {
      * Preload the suffix buffers into memory
      */
     private void preloadSuffixBuffers(String kmcSuffixFile) throws IOException {
-        HelperFunctions.log("info", CLASS_NAME, "Loading KMC suffix file " + kmcSuffixFile + " into memory");
-        HelperFunctions.log("warning", CLASS_NAME, "OutOfMemoryError may occur if the suffix file is too large");
-        HelperFunctions.log("warning", CLASS_NAME, "Consider using the KCFTOOLS_HEAP_SIZE setting");
+        Logger.info(CLASS_NAME, "Loading KMC suffix file " + kmcSuffixFile + " into memory");
+        Logger.warning(CLASS_NAME, "OutOfMemoryError may occur if the suffix file is too large");
+        Logger.warning(CLASS_NAME, "Consider using the KCFTOOLS_HEAP_SIZE setting");
         int fullPageSize = MAX_BYTE_COUNT / record_size * record_size; // in bytes
         int numberOfPages = (int) ((totalKmers * record_size) / fullPageSize + ((totalKmers * record_size) % fullPageSize == 0 ? 0 : 1));
 
@@ -104,7 +105,7 @@ public class KMC implements AutoCloseable {
      * Read the KMC prefix file
      */
     private void readPrefixFile(String kmcPrefixFile) throws IOException {
-        HelperFunctions.log("info", CLASS_NAME, "Reading KMC prefix file " + kmcPrefixFile);
+        Logger.info(CLASS_NAME, "Reading KMC prefix file " + kmcPrefixFile);
         try (RandomAccessFile raf = new RandomAccessFile(kmcPrefixFile, "r")) {
             long fileSize = raf.length();
 
@@ -137,7 +138,7 @@ public class KMC implements AutoCloseable {
             // get 4 bytes for version and check if its 0x200 or 0
             version = buffer.getInt();
             if (version != 0x200) {
-                HelperFunctions.log("error", CLASS_NAME, "KMC version is not 0x200");
+                Logger.error(CLASS_NAME, "KMC version is not 0x200");
             }
 
             // go to position buffer.position((int) (fileSize - headerOffset - 8 - (signatureMapSize * 4)));
@@ -163,7 +164,7 @@ public class KMC implements AutoCloseable {
             }
 
         } catch (IOException | BufferUnderflowException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error reading prefix file " + kmcPrefixFile);
+            Logger.error(CLASS_NAME, "Error reading prefix file " + kmcPrefixFile);
         }
     }
 
@@ -174,7 +175,7 @@ public class KMC implements AutoCloseable {
 //        int record_size = counterSize + sufixLength / 4;
         int full_page_size = MAX_BYTE_COUNT / record_size * record_size; // in bytes
         int number_of_pages = (int) ((totalKmers * record_size) / full_page_size + ((totalKmers * record_size) % full_page_size == 0 ? 0 : 1));
-        HelperFunctions.log("info", CLASS_NAME, "MemoryMapping KMC suffix file " + kmcSuffixFile);
+        Logger.info(CLASS_NAME, "MemoryMapping KMC suffix file " + kmcSuffixFile);
         try (RandomAccessFile suf_file = new RandomAccessFile(kmcSuffixFile, "r")) {
             // first 4 bytes are the marker KMCS in the file
             suf_file.seek(4);
@@ -185,7 +186,7 @@ public class KMC implements AutoCloseable {
                 suffixBuffers[i] = suf_file.getChannel().map(FileChannel.MapMode.READ_ONLY, ((long)full_page_size) * i + 4, page_size);
             }
         } catch (IOException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error reading suffix buffers from file " + kmcSuffixFile);
+            Logger.error(CLASS_NAME, "Error reading suffix buffers from file " + kmcSuffixFile);
         }
     }
 
@@ -194,7 +195,7 @@ public class KMC implements AutoCloseable {
      */
     public void dumpPrefixArray(String prefixArrayFile) throws IOException {
         int columnSize = 1 << (2 * lutPrefixLength);
-        HelperFunctions.log("info", CLASS_NAME, "Writing prefix array to file " + prefixArrayFile);
+        Logger.info(CLASS_NAME, "Writing prefix array to file " + prefixArrayFile);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(prefixArrayFile))) {
             for (int i = 0; i < prefixArray.length; i++) {
                 writer.write(String.valueOf(prefixArray[i]));
@@ -205,7 +206,7 @@ public class KMC implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error writing prefix array to file " + prefixArrayFile);
+            Logger.error(CLASS_NAME, "Error writing prefix array to file " + prefixArrayFile);
         }
     }
 
@@ -238,7 +239,7 @@ public class KMC implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error writing suffix buffer to file " + suffixBufferFile);
+            Logger.error(CLASS_NAME, "Error writing suffix buffer to file " + suffixBufferFile);
         }
     }
 
@@ -251,7 +252,7 @@ public class KMC implements AutoCloseable {
                 writer.write(i + " " + signatureMap[i] + "\n");
             }
         } catch (IOException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error writing signature map to file " + signatureMapFile);
+            Logger.error(CLASS_NAME, "Error writing signature map to file " + signatureMapFile);
         }
     }
 
@@ -267,23 +268,24 @@ public class KMC implements AutoCloseable {
      * Print a summary of the KMC object
      */
     public void printSummary() {
-        HelperFunctions.log("info", CLASS_NAME, "==================== KMC INFO ====================");
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "KMC prefix file", kmcPrefixFile));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "KMC suffix file", kmcSuffixFile));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Kmer length", kmerLength));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Mode", mode));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Counter size", counterSize));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "LUT prefix length", lutPrefixLength));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Signature length", signatureLength));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Min count", minCount));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Max count", maxCount));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Total kmers", totalKmers));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %b", "Both strands", bothStrands));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Signature map size", signatureMap.length));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Single LUT size", singleLUTSize));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %d", "Prefix buffer size", prefixArray.length));
-        HelperFunctions.log("info", CLASS_NAME, String.format("%-25s: %s", "Version", Integer.toHexString(version)));
-        HelperFunctions.log("info", CLASS_NAME, "==================================================");
+        Logger.info(CLASS_NAME, "==================== KMC INFO ====================");
+        Logger.info(CLASS_NAME, String.format("%-25s: %s", "KMC prefix file", kmcPrefixFile));
+        Logger.info(CLASS_NAME, String.format("%-25s: %s", "KMC suffix file", kmcSuffixFile));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Kmer length", kmerLength));
+        Logger.info(CLASS_NAME, String.format("%-25s: %s", "Mode", mode));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Counter size", counterSize));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "LUT prefix length", lutPrefixLength));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Signature length", signatureLength));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Min count", minCount));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Max count", maxCount));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Total kmers", totalKmers));
+        Logger.info(CLASS_NAME, String.format("%-25s: %b", "Both strands", bothStrands));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Signature map size", signatureMap.length));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Single LUT size", singleLUTSize));
+        Logger.info(CLASS_NAME, String.format("%-25s: %d", "Prefix buffer size", prefixArray.length));
+        Logger.info(CLASS_NAME, String.format("%-25s: %s", "Version", Integer.toHexString(version)));
+        Logger.info(CLASS_NAME, "==================================================");
+
     }
 
     /***

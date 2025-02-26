@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -18,7 +18,7 @@ public class KCFWriter implements AutoCloseable {
     public KCFWriter(String filename) throws IOException {
         this.header = null;
         this.writer = new BufferedWriter(new FileWriter(filename));
-        HelperFunctions.log("info", CLASS_NAME, "Writing KCF file: " + filename);
+        Logger.info(CLASS_NAME, "Writing KCF file: " + filename);
     }
 
     public void writeKCF(KCFHeader header, Iterable<Window> windows) throws IOException {

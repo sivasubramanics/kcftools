@@ -1,6 +1,7 @@
 package nl.wur.bis.kcftools.Data;
 
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 
 import java.io.*;
 import java.nio.MappedByteBuffer;
@@ -24,10 +25,10 @@ public class FastaIndex implements AutoCloseable {
         File indexFile = new File(faiFilePath);
 
         if (!indexFile.exists() || HelperFunctions.isOlder(indexFile, fastaFile)) {
-            HelperFunctions.log("info", CLASS_NAME, "Generating/Updating index file: " + faiFilePath);
+            Logger.info(CLASS_NAME, "Generating/Updating index file: " + faiFilePath);
             generateIndexFile(fastaFile, indexFile);
         } else {
-            HelperFunctions.log("info", CLASS_NAME, "Using existing index file: " + faiFilePath);
+            Logger.info(CLASS_NAME, "Using existing index file: " + faiFilePath);
         }
 
         // sort this.index by entry.seqId
@@ -66,7 +67,7 @@ public class FastaIndex implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            HelperFunctions.log("error", CLASS_NAME, "Error memory-mapping fasta file: " + e.getMessage());
+            Logger.error(CLASS_NAME, "Error memory-mapping fasta file: " + e.getMessage());
             throw e;
         }
     }
@@ -90,7 +91,7 @@ public class FastaIndex implements AutoCloseable {
                 );
                 seqId++;
                 if (tempIndex.putIfAbsent(entry.getSequenceName(), entry) != null) {
-                    HelperFunctions.log("error", CLASS_NAME, "Duplicate sequence name in index: " + entry.getSequenceName());
+                    Logger.error(CLASS_NAME, "Duplicate sequence name in index: " + entry.getSequenceName());
                 }
             }
         }
@@ -118,13 +119,13 @@ public class FastaIndex implements AutoCloseable {
         int end = start + length;
         FastaIndexEntry entry = getEntry(name);
         if (entry == null) {
-            HelperFunctions.log("error", CLASS_NAME, "Sequence not found in index: " + name);
+            Logger.error(CLASS_NAME, "Sequence not found in index: " + name);
             return null;
         }
 
         // Validate start and end
         if (start < 0 || end > entry.getLength() || start >= end) {
-            HelperFunctions.log("error", CLASS_NAME, "Invalid range: " + start + "-" + end + " for sequence: " + name);
+            Logger.error(CLASS_NAME, "Invalid range: " + start + "-" + end + " for sequence: " + name);
             return null;
         }
 
@@ -168,7 +169,7 @@ public class FastaIndex implements AutoCloseable {
                     startLineBaseIndex = 0;
                 }
             } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
-                HelperFunctions.log("error", CLASS_NAME, "Error reading sequence: " + e.getMessage());
+                Logger.error(CLASS_NAME, "Error reading sequence: " + e.getMessage());
                 return null;
             }
         }
@@ -222,7 +223,7 @@ public class FastaIndex implements AutoCloseable {
     public int getSequenceLength(String name) {
         FastaIndexEntry entry = getEntry(name);
         if (entry == null) {
-            HelperFunctions.log("error", CLASS_NAME, "Sequence not found in index: " + name);
+            Logger.error(CLASS_NAME, "Sequence not found in index: " + name);
             return -1;
         }
         return entry.getLength();
@@ -233,7 +234,7 @@ public class FastaIndex implements AutoCloseable {
      */
     private void generateIndexFile(File fastaFile, File indexFile) throws IOException {
         if (HelperFunctions.isCompressed(fastaFile)) {
-            HelperFunctions.log("error", CLASS_NAME, "Fasta file is compressed. Please decompress before indexing: " + fastaFile);
+            Logger.error(CLASS_NAME, "Fasta file is compressed. Please decompress before indexing: " + fastaFile);
             throw new IllegalArgumentException("Fasta file is compressed. Please decompress before indexing: " + fastaFile);
         }
 

@@ -5,6 +5,7 @@ import nl.wur.bis.kcftools.Data.KCFReader;
 import nl.wur.bis.kcftools.Data.KCFWriter;
 import nl.wur.bis.kcftools.Data.Window;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.util.concurrent.Callable;
@@ -45,10 +46,10 @@ public class SplitKCF implements Callable<Integer>, Runnable {
 
     private void splitKCF() {
         if (HelperFunctions.checkDirectoryExists(outDir)) {
-            HelperFunctions.log("info", CLASS_NAME, "Output directory already exists: " + outDir);
+            Logger.info(CLASS_NAME, "Output directory already exists: " + outDir);
         }
         else {
-            HelperFunctions.log("info", CLASS_NAME, "Creating output directory: " + outDir);
+            Logger.info(CLASS_NAME, "Creating output directory: " + outDir);
             HelperFunctions.createDirectory(outDir);
         }
         try (KCFReader reader = new KCFReader(kcfFile)) {

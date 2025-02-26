@@ -1,6 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -22,7 +22,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
     public KCFReader(String filename) {
         this.filename = filename;
         this.header = null;
-        HelperFunctions.log("info", CLASS_NAME, "Reading KCF file: " + filename);
+        Logger.info(CLASS_NAME, "Reading KCF file:" + filename);
     }
 
     public KCFHeader getHeader() {
@@ -87,24 +87,10 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
 
                 Window window = new Window(fields, getHeader().getSamples());
 
-//                String sequenceName = fields[0];
-//                int start = Integer.parseInt(fields[1]);
-//                int end = Integer.parseInt(fields[2]);
-//                String windowId = fields[3];
-//                int totalKmers = Integer.parseInt(fields[4]);
-//
-//                Window window = new Window(windowId, sequenceName, start, end, totalKmers);
-//
-//                // Parse sample data
-//                for (int i = 0; i < getHeader().getSamples().length; i++) {
-//                    String[] sampleData = fields[i + 7].split(":");
-//                    window.addData(getHeader().getSamples()[i], Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), sampleData[0]);
-//                }
-
                 nextLine = reader.readLine();
                 return window;
             } catch (IOException e) {
-                HelperFunctions.log("error", CLASS_NAME, "Error reading KCF file: " + filename);
+                Logger.error(CLASS_NAME, "Error reading KCF file: " + filename);
                 throw new RuntimeException("Error reading KCF file", e);
             }
         }
