@@ -41,12 +41,22 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // feature type: gene or transcript
     @Option(names = {"-f", "--feature"}, description = "Feature type (\"gene\" or \"transcript\")", required = false)
     private String featureType;
+    // inner kmer distance weight
+    @Option(names = {"--wi"}, description = "Inner kmer distance weight", required = false)
+    private double innerDistanceWeight = 0.3;
+    // tail kmer distance weight
+    @Option(names = {"--wt"}, description = "Tail kmer distance weight", required = false)
+    private double tailDistanceWeight = 0.3;
+    // kmer ratio weight
+    @Option(names = {"--wr"}, description = "Kmer ratio weight", required = false)
+    private double kmerRatioWeight = 0.4;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
     private String model = "wholegenome";
     private FastaIndex index;
     private int kmerSize;
     private GTFReader gtfReader;
+    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
 
     public GetVariants() {
     }
@@ -82,6 +92,11 @@ public class GetVariants implements Callable<Integer>, Runnable {
         header.setWindowSize(windowSize);
         header.setKmerSize(kmc.getKmerLength());
         header.setIBS(false);
+        header.setWeightInnerDist(innerDistanceWeight);
+        header.setWeightTailDist(tailDistanceWeight);
+        header.setWeightKmerRatio(kmerRatioWeight);
+
+
 
         index = new FastaIndex(refFasta);
         ConcurrentHashMap<String, Queue<Window>> windowsMap = new ConcurrentHashMap<>();
@@ -238,7 +253,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N");
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N", weights);
         }
 
         return window;

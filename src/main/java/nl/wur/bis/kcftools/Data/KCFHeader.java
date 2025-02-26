@@ -24,8 +24,8 @@ public class KCFHeader implements Comparable<KCFHeader> {
     private final String formatLines;
     private List<String> commandLines;
     private String[] samples;
-    // window, kmer, IBS, nunWindow as parameters in the order
-    private final Pair[] params = new Pair[4];
+    // window, kmer, IBS, numWindow, weightInnerDistance, weightTailDistance, weightKmerRatio as parameters in the order
+    private final Pair[] params = new Pair[7];
 
     public KCFHeader(){
         this.version = Configs.KCF_VERSION.getValue();
@@ -86,6 +86,15 @@ public class KCFHeader implements Comparable<KCFHeader> {
                     case "nwindow":
                         params[3] = param;
                         break;
+                    case "wti":
+                        params[4] = param;
+                        break;
+                    case "wtt":
+                        params[5] = param;
+                        break;
+                    case "wtk":
+                        params[6] = param;
+                        break;
                 }
             }
         }
@@ -100,6 +109,30 @@ public class KCFHeader implements Comparable<KCFHeader> {
         String key = fields[0].substring(3);
         String value = fields[1].substring(6);
         return new Pair(key, value);
+    }
+
+    public double getWeightKmerRatio(){
+        return this.params[6] != null ? Double.parseDouble(this.params[6].getValue()) : 0.0;
+    }
+
+    public void setWeightKmerRatio(double wtk){
+        this.params[6] = new Pair("wtk", String.valueOf(wtk));
+    }
+
+    public double getWeightTailDist(){
+        return this.params[5] != null ? Double.parseDouble(this.params[5].getValue()) : 0.0;
+    }
+
+    public void setWeightTailDist(double wtt){
+        this.params[5] = new Pair("wtt", String.valueOf(wtt));
+    }
+
+    public double getWeightInnerDist(){
+        return this.params[4] != null ? Double.parseDouble(this.params[4].getValue()) : 0.0;
+    }
+
+    public void setWeightInnerDist(double wti){
+        this.params[4] = new Pair("wti", String.valueOf(wti));
     }
 
     public int getWindowCount(){
@@ -214,10 +247,11 @@ public class KCFHeader implements Comparable<KCFHeader> {
                 sb.append("##FORMAT=").append(formatLine).append("\n");
             }
         }
-        sb.append("##PARAM=<ID=window,value=").append(getWindowSize()).append(">\n");
-        sb.append("##PARAM=<ID=kmer,value=").append(getKmerSize()).append(">\n");
-        sb.append("##PARAM=<ID=IBS,value=").append(isIBS()).append(">\n");
-        sb.append("##PARAM=<ID=nwindow,value=").append(getWindowCount()).append(">\n");
+        for (Pair param : params){
+            if (param != null){
+                sb.append("##PARAM=<ID=").append(param.getKey()).append(",value=").append(param.getValue()).append(">\n");
+            }
+        }
         if (commandLines != null) {
             for (String commandLine : commandLines) {
                 sb.append("##CMD=").append(commandLine).append("\n");
@@ -254,6 +288,18 @@ public class KCFHeader implements Comparable<KCFHeader> {
             Logger.error(CLASSNAME, "Number of windows mismatch between the KCFs");
             return false;
         }
+        if (getWeightInnerDist() != kcfHeader.getWeightInnerDist()) {
+            Logger.error(CLASSNAME, "Weight Inner Distance mismatch between the KCFs");
+            return false;
+        }
+        if (getWeightTailDist() != kcfHeader.getWeightTailDist()) {
+            Logger.error(CLASSNAME, "Weight Tail Distance mismatch between the KCFs");
+            return false;
+        }
+        if (getWeightKmerRatio() != kcfHeader.getWeightKmerRatio()) {
+            Logger.error(CLASSNAME, "Weight Kmer Ratio mismatch between the KCFs");
+            return false;
+        }
         return true;
     }
 
@@ -284,6 +330,21 @@ public class KCFHeader implements Comparable<KCFHeader> {
             Logger.error(CLASSNAME, "IBS processing mismatch between the KCFs");
             return ibsCompare;
         }
+        int wtiCompare = Double.compare(this.getWeightInnerDist(), o.getWeightInnerDist());
+        if (wtiCompare != 0) {
+            Logger.error(CLASSNAME, "Weight Inner Distance mismatch between the KCFs");
+            return wtiCompare;
+        }
+        int wttCompare = Double.compare(this.getWeightTailDist(), o.getWeightTailDist());
+        if (wttCompare != 0) {
+            Logger.error(CLASSNAME, "Weight Tail Distance mismatch between the KCFs");
+            return wttCompare;
+        }
+        int wtkCompare = Double.compare(this.getWeightKmerRatio(), o.getWeightKmerRatio());
+        if (wtkCompare != 0) {
+            Logger.error(CLASSNAME, "Weight Kmer Ratio mismatch between the KCFs");
+            return wtkCompare;
+        }
         return 0;
     }
 
@@ -307,6 +368,10 @@ public class KCFHeader implements Comparable<KCFHeader> {
 
     public boolean hasSample(String sampleName) {
         return samples != null && Arrays.asList(samples).contains(sampleName);
+    }
+
+    public double[] getWeights() {
+        return new double[]{getWeightInnerDist(), getWeightTailDist(), getWeightKmerRatio()};
     }
 }
 

@@ -85,7 +85,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
             try {
                 String[] fields = nextLine.split("\t");
 
-                Window window = new Window(fields, getHeader().getSamples());
+                Window window = new Window(fields, getHeader().getSamples(), getHeader().getWeights());
 
                 nextLine = reader.readLine();
                 return window;
