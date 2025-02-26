@@ -12,7 +12,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Command(name = "getVariations", description = " Screen for reference kmers that are not present in the KMC database, and detect variation")
+@Command(name = "getVariations", description = " Screen for reference kmers that are not present in the KMC database, and detect variation", sortOptions = false)
 public class GetVariants implements Callable<Integer>, Runnable {
     // in reference file name
     @Option(names = {"-r", "--reference"}, description = "Reference file name", required = true)
@@ -20,33 +20,42 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // in KMC database prefix
     @Option(names = {"-k", "--kmc"}, description = "KMC database prefix", required = true)
     private String kmcDBprefix;
-    // in window size
-    @Option(names = {"-w", "--window"}, description = "Window size", required = false)
-    private int windowSize;
     // in output file name
     @Option(names = {"-o", "--output"}, description = "Output file name", required = true)
     private String outFile;
-    // in number of threads
-    @Option(names = {"-t", "--threads"}, description = "Number of threads", required = false)
-    private int nThreads = 2;
     // sample name
     @Option(names = {"-s", "--sample"}, description = "Sample name", required = true)
     private String sampleName;
+    // feature type: window or gene or transcript
+    @Option(names = {"-f", "--feature"}, description = "Feature type (\"window\" or \"gene\" or \"transcript\")", required = true)
+    private String featureType;
+    // in number of threads
+    @Option(names = {"-t", "--threads"}, description = "Number of threads [2]", required = false)
+    private int nThreads = 2;
     // load kmc into memory
     @Option(names = {"-m", "--memory"}, description = "Load KMC database into memory", required = false)
     private boolean loadMemory = false;
+    // inner kmer distance weight
+    @Option(names = {"--wi"}, description = "Inner kmer distance weight [0.3]", required = false)
+    private double innerDistanceWeight = 0.3;
+    // tail kmer distance weight
+    @Option(names = {"--wt"}, description = "Tail kmer distance weight [0.3]", required = false)
+    private double tailDistanceWeight = 0.3;
+    // kmer ratio weight
+    @Option(names = {"--wr"}, description = "Kmer ratio weight [0.4]", required = false)
+    private double kmerRatioWeight = 0.4;
+    // in window size
+    @Option(names = {"-w", "--window"}, description = "Window size", required = false)
+    private int windowSize;
     // if its RNA-seq data, get gtf file and feature type (gene, mRNA, CDS)
     @Option(names = {"-g", "--gtf"}, description = "GTF file name", required = false)
     private String gtfFile;
-    // feature type: gene or transcript
-    @Option(names = {"-f", "--feature"}, description = "Feature type (\"gene\" or \"transcript\")", required = false)
-    private String featureType;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
-    private String model = "wholegenome";
     private FastaIndex index;
     private int kmerSize;
     private GTFReader gtfReader;
+    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
 
     public GetVariants() {
     }
@@ -82,17 +91,19 @@ public class GetVariants implements Callable<Integer>, Runnable {
         header.setWindowSize(windowSize);
         header.setKmerSize(kmc.getKmerLength());
         header.setIBS(false);
+        header.setWeightInnerDist(innerDistanceWeight);
+        header.setWeightTailDist(tailDistanceWeight);
+        header.setWeightKmerRatio(kmerRatioWeight);
+
+
 
         index = new FastaIndex(refFasta);
         ConcurrentHashMap<String, Queue<Window>> windowsMap = new ConcurrentHashMap<>();
 
-        if (gtfFile != null) {
-            model = "targeted";
+        if (featureType.equals("gene") || featureType.equals("transcript")){
             gtfReader = new GTFReader(gtfFile);
         }
-        else{
-            model = "wholegenome";
-        }
+
         Logger.info(CLASS_NAME, "Generating windows...");
         for (String name : index.getSequenceNames()) {
             header.addContig(name, index.getSequenceLength(name));
@@ -169,11 +180,11 @@ public class GetVariants implements Callable<Integer>, Runnable {
      * Get the Fasta object based on the model type
      */
     private Fasta getFasta(Window window){
-        return switch (model) {
-            case "wholegenome" -> window.getFasta(index);
-            case "targeted" -> gtfReader.getFasta(window.getWindowId(), featureType, index);
+        return switch (featureType) {
+            case "window" -> window.getFasta(index);
+            case "gene", "transcript" -> gtfReader.getFasta(window.getWindowId(), featureType, index);
             default -> {
-                Logger.error(CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
+                Logger.error(CLASS_NAME, "Invalid model type: " + featureType + ". Supported models are 'window' or 'gene' or 'transcript'");
                 yield null;
             }
         };
@@ -238,7 +249,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N");
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N", weights);
         }
 
         return window;
@@ -262,8 +273,8 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private Queue<Window> getWindows(String sequenceName) {
         Queue<Window> windows = new ConcurrentLinkedDeque<>();
         int sequenceLength = index.getSequenceLength(sequenceName);
-        switch (model) {
-            case "wholegenome" -> {
+        switch (featureType) {
+            case "window" -> {
                 int lastEnd = 0;
                 while (lastEnd < sequenceLength) {
                     int start = Math.max(0, lastEnd - kmerSize);
@@ -274,12 +285,12 @@ public class GetVariants implements Callable<Integer>, Runnable {
                     lastEnd = end;
                 }
             }
-            case "targeted" -> {
+            case "gene", "transcript" -> {
                 for (GTFReader.Feature feature : gtfReader.getFeatures(sequenceName, featureType)) {
                     windows.add(new Window(feature.getId(), sequenceName, feature.getStart(), feature.getEnd()));
                 }
             }
-            default -> Logger.error(CLASS_NAME, "Invalid model type: " + model + ". Supported models are 'wholegenome' and 'targeted'");
+            default -> Logger.error(CLASS_NAME, "Invalid model type: " + featureType + ". Supported models are 'window' or 'gene' or 'transcript'");
         }
         return windows;
     }
@@ -288,25 +299,27 @@ public class GetVariants implements Callable<Integer>, Runnable {
      * Validate the command line arguments
      */
     private void validateCMD() {
-        if(gtfFile != null && gtfFile.isEmpty()){
-            if (windowSize > 0) {
-                Logger.error(CLASS_NAME, "Window size is not valid for targeted model");
+        switch (featureType) {
+            case "window" -> {
+                if (windowSize <= 0) {
+                    Logger.error(CLASS_NAME, "Window size is required for window model");
+                }
+                if (gtfFile != null && !gtfFile.isEmpty()) {
+                    Logger.error(CLASS_NAME, "GTF file is not valid for window model");
+                }
             }
-            if (featureType == null) {
-                Logger.error(CLASS_NAME, "Feature type (gene or transcript) is required for targeted model");
+            case "gene", "transcript" -> {
+                if (gtfFile == null || gtfFile.isEmpty()) {
+                    Logger.error(CLASS_NAME, "GTF file is required for targeted model");
+                }
+                if (windowSize > 0) {
+                    Logger.error(CLASS_NAME, "Window size is not valid for targeted model");
+                }
             }
-            if (!featureType.equals("gene") && !featureType.equals("transcript")) {
-                Logger.error(CLASS_NAME, "Invalid feature type: " + featureType + ". Supported feature types are 'gene' and 'transcript'");
-            }
+            default ->
+                    Logger.error(CLASS_NAME, "Invalid model type: " + featureType + ". Supported models are 'window' or 'gene' or 'transcript'");
         }
-        if (featureType != null && !featureType.isEmpty()) {
-            if (gtfFile == null) {
-                Logger.error(CLASS_NAME, "GTF file is required for targeted model");
-            }
-        }
-        if (windowSize <= 0 && gtfFile == null) {
-            Logger.error(CLASS_NAME, "Window size (for wholegenome model) or GTF file (for targeted model) is required");
-        }
+
         if (nThreads <= 0) {
             Logger.error(CLASS_NAME, "Number of threads should be greater than 0");
         }

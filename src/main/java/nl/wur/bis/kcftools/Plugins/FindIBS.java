@@ -114,7 +114,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
             for (String chromName : windows.keySet()) {
                 Window[] chromWindows = windows.get(chromName);
                 int numNA = 0;
-                float score = 0;
+                double score;
                 boolean isIBSRegion;
 
                 for (int i = 0; i < chromWindows.length; i++) {

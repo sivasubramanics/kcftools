@@ -25,9 +25,9 @@ public class Window implements Comparable<Window> {
     int minVariations;
     int maxVariations;
     float meanVariations;
-    float minScore;
-    float maxScore;
-    float meanScore;
+    double minScore;
+    double maxScore;
+    double meanScore;
 
 
     public Window(String windowId, String sequenceName, int start, int end){
@@ -40,7 +40,7 @@ public class Window implements Comparable<Window> {
         this.data = new LinkedHashMap<>();
     }
 
-    public Window(String[] fields, String[] samples){
+    public Window(String[] fields, String[] samples, double[] weights){
         this.windowId = fields[3];
         this.sequenceName = fields[0];
         this.start = Integer.parseInt(fields[1]);
@@ -51,7 +51,7 @@ public class Window implements Comparable<Window> {
         for (int i = 7; i < fields.length; i++){
             String[] sampleData = fields[i].split(":");
             // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:score
-            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), totalKmers, effLength, sampleData[0]));
+            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), totalKmers, effLength, sampleData[0], weights));
         }
     }
 
@@ -65,13 +65,13 @@ public class Window implements Comparable<Window> {
         }
     }
 
-    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int tailDistance, String ibs) {
-        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0, totalKmers, effLength));
+    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int tailDistance, String ibs, double[] weights) {
+        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0, totalKmers, effLength, weights));
         d.observedKmers = observedKmers;
         d.variations = variations;
         d.innerDistance = innerDistance;
         d.tailDistance = tailDistance;
-        d.score = d.computeScore(totalKmers, effLength);
+        d.score = d.computeScore(totalKmers, effLength, weights);
         d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
 
@@ -230,7 +230,7 @@ public class Window implements Comparable<Window> {
         return data.keySet().toArray(new String[0]);
     }
 
-    public float getScore(String sample){
+    public double getScore(String sample){
         return data.get(sample).getScore();
     }
 

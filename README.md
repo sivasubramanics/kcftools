@@ -47,13 +47,21 @@ The list of available commands and their descriptions are as follows:
 * Usage:
 ```bash
 java -jar kcftools-<version>.jar getVariations [options]
-  -k, --kmc=<kmcDBprefix>    KMC database prefix
-  -m, --memory               Load KMC database into memory
-  -o, --output=<outFile>     Output file name
   -r, --reference=<refFasta> Reference file name
+  -k, --kmc=<kmcDBprefix>    KMC database prefix
+  -o, --output=<outFile>     Output file name
   -s, --sample=<sampleName>  Sample name
-  -t, --threads=<nThreads>   Number of threads
+  -f, --feature=<featureType>
+                             Feature type ("window" or "gene" or "transcript")
+  -t, --threads=<nThreads>   Number of threads [2]
+  -m, --memory               Load KMC database into memory
+      --wi=<innerDistanceWeight>
+                             Inner kmer distance weight [0.3]
+      --wt=<tailDistanceWeight>
+                             Tail kmer distance weight [0.3]
+      --wr=<kmerRatioWeight> Kmer ratio weight [0.4]
   -w, --window=<windowSize>  Window size
+  -g, --gtf=<gtfFile>        GTF file name
 ```
 2. **`cohort`**: Create a cohort of sample KCF files for downstream analysis.
 * Usage:
