@@ -74,5 +74,13 @@ public class Data{
     public String toTSV() {
         return observedKmers + "\t" + variations + "\t" + innerDistance;
     }
+
+    public int getInnerDistance() {
+        return innerDistance;
+    }
+
+    public int getTailDistance() {
+        return tailDistance;
+    }
 }
 // EOF

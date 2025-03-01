@@ -270,5 +270,13 @@ public class Window implements Comparable<Window> {
     public int getEffLength() {
         return effLength;
     }
+
+    public int getInnerDistance(String sample) {
+        return data.get(sample).getInnerDistance();
+    }
+
+    public int getTailDistance(String sample) {
+        return data.get(sample).getTailDistance();
+    }
 }
 // EOF

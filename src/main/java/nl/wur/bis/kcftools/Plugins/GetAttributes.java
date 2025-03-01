@@ -58,7 +58,9 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                 BufferedWriter varWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".var.tsv"));
                 BufferedWriter scoreWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".score.tsv"));
              BufferedWriter totWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".totalkmers.tsv"));
-             BufferedWriter winlen = new BufferedWriter(new java.io.FileWriter(outFile + ".winlen.tsv"))){
+             BufferedWriter winlen = new BufferedWriter(new java.io.FileWriter(outFile + ".winlen.tsv"));
+             BufferedWriter inDist = new BufferedWriter(new java.io.FileWriter(outFile + ".inDist.tsv"));
+             BufferedWriter tailDist = new BufferedWriter(new java.io.FileWriter(outFile + ".tailDist.tsv"))) {
             Logger.info(CLASS_NAME, "Reading KCF file: " + kcfFile);
             KCFHeader header = reader.getHeader();
             String[] samples = header.getSamples();
@@ -72,26 +74,36 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                 obsWriter.write("\t" + sample);
                 varWriter.write("\t" + sample);
                 scoreWriter.write("\t" + sample);
+                inDist.write("\t" + sample);
+                tailDist.write("\t" + sample);
             }
             obsWriter.newLine();
             varWriter.newLine();
             scoreWriter.newLine();
             totWriter.newLine();
             winlen.newLine();
+            inDist.newLine();
+            tailDist.newLine();
             for (Window window: reader){
                 obsWriter.write(window.getWindowId());
                 varWriter.write(window.getWindowId());
                 scoreWriter.write(window.getWindowId());
+                inDist.write(window.getWindowId());
+                tailDist.write(window.getWindowId());
                 for (String sample : samples) {
                     obsWriter.write("\t" + window.getObservedKmers(sample));
                     varWriter.write("\t" + window.getVariations(sample));
                     scoreWriter.write("\t" + String.format("%.2f", window.getScore(sample)));
+                    inDist.write("\t" + window.getInnerDistance(sample));
+                    tailDist.write("\t" + window.getTailDistance(sample));
                 }
                 totWriter.write(window.getWindowId() + "\t" + window.getTotalKmers());
                 winlen.write(window.getWindowId() + "\t" + window.getEffLength());
                 obsWriter.newLine();
                 varWriter.newLine();
                 scoreWriter.newLine();
+                inDist.newLine();
+                tailDist.newLine();
                 totWriter.newLine();
                 winlen.newLine();
             }
