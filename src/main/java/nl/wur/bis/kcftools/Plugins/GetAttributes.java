@@ -68,6 +68,8 @@ public class GetAttributes implements Callable<Integer>, Runnable {
             obsWriter.write("window_id");
             varWriter.write("window_id");
             scoreWriter.write("window_id");
+            inDist.write("window_id");
+            tailDist.write("window_id");
             totWriter.write("window_id" + "\t" + "total_kmers");
             winlen.write("window_id" + "\t" + "window_length");
             for (String sample: samples){
