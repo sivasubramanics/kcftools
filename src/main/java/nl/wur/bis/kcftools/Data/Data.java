@@ -7,21 +7,39 @@ public class Data{
     int variations;
     double score;
     int ibs;
+    int leftDistance;
+    int rightDistance;
 
-    public Data(int observedKmers, int variations, int innerDistance, int tailDistance, int totalKmers, int effLength, double[] weights) {
+    public Data(int observedKmers,
+                int variations,
+                int innerDistance,
+                int leftDistance,
+                int rightDistance,
+                int totalKmers,
+                int effLength,
+                double[] weights) {
         this.observedKmers = observedKmers;
         this.variations = variations;
+        this.leftDistance = leftDistance;
+        this.rightDistance = rightDistance;
         this.innerDistance = innerDistance;
-        this.tailDistance = tailDistance;
         this.score = computeScore(totalKmers, effLength, weights);
         this.ibs = -1;
     }
 
-    public Data(int observedKmers, int variations, int innerDistance, int tailDistance, int totalKmers, int effLength, String ibs, double[] weights) {
+    public Data(int observedKmers,
+                int variations,
+                int innerDistance,
+                int leftDistance,
+                int rightDistance,
+                int totalKmers,
+                int effLength,
+                String ibs, double[] weights) {
         this.observedKmers = observedKmers;
         this.variations = variations;
+        this.leftDistance = leftDistance;
+        this.rightDistance = rightDistance;
         this.innerDistance = innerDistance;
-        this.tailDistance = tailDistance;
         this.score = computeScore(totalKmers, effLength, weights);
         if (ibs.equals("N")){
             this.ibs = -1;
@@ -48,11 +66,11 @@ public class Data{
 
     @Override
     public String toString(){
-        // ibs:variations:observedKmers:innerDistance:tailDistance:score
+        // ibs:variations:observedKmers:innerDistance:leftDistane:rightDistance:score
         if (ibs == -1){
-            return "N" + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + tailDistance + ":" + String.format("%.2f", score);
+            return "N" + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + leftDistance + ":" + rightDistance + ":" + String.format("%.2f", score);
         }
-        return ibs + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + tailDistance + ":" + String.format("%.2f", score);
+        return ibs + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + leftDistance + ":" + rightDistance + ":" + String.format("%.2f", score);
     }
 
     public void setIBS(int ibs) {
@@ -72,7 +90,7 @@ public class Data{
     }
 
     public String toTSV() {
-        return observedKmers + "\t" + variations + "\t" + innerDistance;
+        return getObservedKmers() + "\t" + getVariations() + "\t" + getInnerDistance() + getTailDistance();
     }
 
     public int getInnerDistance() {
@@ -80,7 +98,15 @@ public class Data{
     }
 
     public int getTailDistance() {
-        return tailDistance;
+        return getLeftDistance() + getRightDistance();
+    }
+
+    public int getLeftDistance() {
+        return leftDistance;
+    }
+
+    public int getRightDistance() {
+        return rightDistance;
     }
 }
 // EOF

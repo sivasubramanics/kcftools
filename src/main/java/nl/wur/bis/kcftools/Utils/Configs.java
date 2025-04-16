@@ -22,7 +22,9 @@ public enum Configs {
                     <ID=IB,Type=Integer,Description="IBS number">
                     <ID=VA,Type=Integer,Description="Variations">
                     <ID=OB,Type=Integer,Description="Observed kmers">
-                    <ID=DI,Type=Integer,Description="Kmer Variation Distance">
+                    <ID=ID,Type=Integer,Description="Inner Distance">
+                    <ID=LD,Type=Integer,Description="Kmer Variation Distance at the leftTail">
+                    <ID=RD,Type=Integer,Description="Kmer Variation Distance at the rightTail">
                     <ID=SC,Type=Float,Description="Score">"""
     );
 

@@ -51,7 +51,7 @@ public class Window implements Comparable<Window> {
         for (int i = 7; i < fields.length; i++){
             String[] sampleData = fields[i].split(":");
             // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:score
-            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), totalKmers, effLength, sampleData[0], weights));
+            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), Integer.parseInt(sampleData[5]), totalKmers, effLength, sampleData[0], weights));
         }
     }
 
@@ -65,12 +65,13 @@ public class Window implements Comparable<Window> {
         }
     }
 
-    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int tailDistance, String ibs, double[] weights) {
-        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0, totalKmers, effLength, weights));
+    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int leftDistance, int rightDistance, String ibs, double[] weights) {
+        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0,0, totalKmers, effLength, weights));
         d.observedKmers = observedKmers;
         d.variations = variations;
         d.innerDistance = innerDistance;
-        d.tailDistance = tailDistance;
+        d.rightDistance = rightDistance;
+        d.leftDistance = leftDistance;
         d.score = d.computeScore(totalKmers, effLength, weights);
         d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
@@ -119,7 +120,7 @@ public class Window implements Comparable<Window> {
     }
 
     private String getFormatField() {
-        return "GT:VA:OB:ID:TD:SC";
+        return "GT:VA:OB:ID:LD:RD:SC";
     }
 
     public void calculateStats(){

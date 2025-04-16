@@ -197,12 +197,11 @@ public class GetVariants implements Callable<Integer>, Runnable {
         int localTotalKmers = 0;
         int localObservedKmers = 0;
         int localVariation = 0;
-//        int localDistance = 0;
         int localInnerDistance = 0;
-        int localTailDistance = 0;
         int gapSize = 0;
         boolean isTail = true;
-//        int tailGap = 0;
+        int localLeftDist = 0;
+        int localRightDist = 0;
 
         if (fasta == null) {
             Logger.error(CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
@@ -223,8 +222,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
                         localVariation++;
                         // if the gap is at the beginning or end of the window, increment the distance
                         if (isTail) {
-                            localTailDistance += gapSize;
-//                            localDistance += gapSize;
+                            localLeftDist += gapSize;
                         }
                         else {
                             // if the gap is in the middle of the window, calculate the distance based on the gap size and kmer size
@@ -241,15 +239,14 @@ public class GetVariants implements Callable<Integer>, Runnable {
             // Process the last gap if it exists
             if (gapSize > 0) {
                 localVariation++;
-//                localDistance += gapSize;
-                localTailDistance += gapSize;
+                localRightDist += gapSize;
             }
         }
 
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localTailDistance, "N", weights);
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", weights);
         }
 
         return window;
