@@ -154,6 +154,7 @@ public class Fasta implements Serializable {
                 if (!isValidBase(base)) {
                     validStart = i + 1;
                     kmer = null;
+                    kmerChars = null;
                     continue;
                 }
 
@@ -164,7 +165,12 @@ public class Fasta implements Serializable {
                         kmer = new Kmer(kmerChars, prefixLength, useCanonical);
                     }
                 } else if (kmer != null) {
-                    kmer = kmer.insertBase(base);
+                    // TODO:
+                    // below line is to be implemented in a better way to improve the performance
+//                    kmer = kmer.insertBase(base);
+                    System.arraycopy(kmerChars, 1, kmerChars, 0, kmerLength - 1);
+                    kmerChars[kmerLength - 1] = base;
+                    kmer = new Kmer(kmerChars, prefixLength, useCanonical);
                 }
 
                 if (kmer != null) {

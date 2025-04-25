@@ -13,6 +13,8 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
+import static nl.wur.bis.kcftools.Data.Kmer.binaryToKmer;
+
 /***
  * This class represents a KMC object which is used to read a KMC database and query the database for kmer counts
  */
@@ -109,18 +111,18 @@ public class KMC implements AutoCloseable {
         try (RandomAccessFile raf = new RandomAccessFile(kmcPrefixFile, "r")) {
             long fileSize = raf.length();
 
-            // Memory map the file
+            // memory map the file
             MappedByteBuffer buffer = raf.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-            // Read the header offset from the last 8 bytes
+            // read the header offset from the last 8 bytes
             buffer.position((int) (fileSize - 8));
             int headerOffset = buffer.getInt();
 
-            // Move to the header location in the file
+            // move to the header location in the file
             buffer.position((int) (fileSize - headerOffset - 8));
 
-            // Read header information
+            // read header information
             kmerLength = buffer.getInt();
             mode = buffer.getInt();
             counterSize = buffer.getInt();
@@ -215,25 +217,25 @@ public class KMC implements AutoCloseable {
      */
     public void dumpSuffixBuffers(String suffixBufferFile) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(suffixBufferFile))) {
-            // Calculate the suffix size in bytes
+            // calculate the suffix size in bytes
             int suffixBytes = sufixLength / 4;
-            // Calculate entry size as suffix bytes plus counter size
+            // calculate entry size as suffix bytes plus counter size
             int entrySize = suffixBytes + counterSize;
             byte[] entry = new byte[entrySize];
             byte[] suffixByteArray;
 
             for (MappedByteBuffer mappedByteBuffer : suffixBuffers) {
                 while (mappedByteBuffer.hasRemaining()) {
-                    // Get entry from buffer
+                    // get entry from buffer
                     mappedByteBuffer.get(entry);
                     int count = 0;
                     suffixByteArray = getSuffixFromEntry(entry);
                     count = getCountFromEntry(entry);
 
-                    // Convert suffix to string
+                    // convert suffix to string
                     String suffix = convertBytesToKmer(suffixByteArray, sufixLength);
 
-                    // Write to file
+                    // write to file
                     writer.write(suffix + " " + count);
                     writer.write("\n");
                 }
@@ -292,13 +294,13 @@ public class KMC implements AutoCloseable {
      * Get the count of a kmer from the KMC database
      */
     public int getCount(Kmer kmer) {
-        // Get the signature, prefix, and suffix from the kmer
+        // get the signature, prefix, and suffix from the kmer
         long start, end;
         int signature = kmer.getSignature(this.signatureReference);
         int prefix = kmer.getPrefixFwd();
         byte[] suffix = kmer.getSuffixFwd();
 
-        // Calculate the start and end indices in the prefix array
+        // calculate the start and end indices in the prefix array
         int signatureIndex = signatureMap[signature] * lutPrefixArraySize;
         start = prefixArray[signatureIndex + prefix];
         if (signatureIndex + prefix + 1 >= prefixArray.length) {
@@ -308,17 +310,17 @@ public class KMC implements AutoCloseable {
             end = prefixArray[signatureIndex + prefix + 1] - 1;
         }
 
-        // Perform binary search to find the matching suffix
+        // perform binary search to find the matching suffix
         while (start <= end) {
             long mid = (start + end) / 2;
-            byte[] entry = getEntry(mid); // Retrieve the entry for the current index
+            byte[] entry = getEntry(mid); // retrieve the entry for the current index
             byte[] suffixFromEntry = getSuffixFromEntry(entry);
 
             int comparison = HelperFunctions.compareByteArray(suffix, suffixFromEntry);
             if (comparison < 0) {
-                end = mid - 1; // Move the search range down
+                end = mid - 1; // move the search range down
             } else if (comparison > 0) {
-                start = mid + 1; // Move the search range up
+                start = mid + 1; // move the search range up
             } else {
                 return getCountFromEntry(entry); // Match found, return count
             }
@@ -421,5 +423,34 @@ public class KMC implements AutoCloseable {
         signatureMap = null;
     }
 
+    /***
+     * dump the kmer table to a file (handle with care as this could create huge file)
+     * @param kmerTableFile
+     * @throws IOException
+     */
+    public void dumpKmerTable(String kmerTableFile) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(kmerTableFile))) {
+            // iterate the whole prefixArray and print the prefix and suffix and count for each kmer
+            for (int i = 0; i < prefixArray.length; i++) {
+                long start = prefixArray[i];
+                long end = (i == prefixArray.length - 1) ? totalKmers - 1 : prefixArray[i + 1] - 1;
+                // get the prefix from the i value where i % singleLUTSize is the prefix int
+                int prefix = i % lutPrefixArraySize;
+                // conver int to string
+                char[] pre = binaryToKmer(prefix, lutPrefixLength);
+                String prefixString = new String(pre);
+                for (long j = start; j <= end; j++) {
+                    byte[] entry = getEntry(j);
+                    byte[] suffix = getSuffixFromEntry(entry);
+                    int count = getCountFromEntry(entry);
+                    String suf = convertBytesToKmer(suffix, sufixLength);
+                    writer.write( prefixString + suf + "\t" + count + "\n");
+                }
+            }
+
+        } catch (IOException e) {
+            Logger.error(CLASS_NAME, "Error writing kmer table to file " + kmerTableFile);
+        }
+    }
 }
 //EOF

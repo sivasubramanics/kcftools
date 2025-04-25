@@ -3,14 +3,14 @@ package nl.wur.bis.kcftools.Data;
 import nl.wur.bis.kcftools.Utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
+import java.util.Arrays;
 
 public class Kmer implements Comparable<Kmer> {
     private final int kmerLength;
     private final int prefixLength;
     private final int suffixLength;
-    private long kmerLong = 0;
     private final boolean isCanonical;
+    private long[] kmerLong;
 
     private Integer prefixFwd;
     private byte[] suffixFwd;
@@ -33,7 +33,6 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     public Kmer(char @NotNull [] kmer, int prefixLength, boolean isCanonical) {
-        long kmerLong;
         this.kmerLength = kmer.length;
         this.prefixLength = prefixLength;
         this.suffixLength = this.kmerLength - prefixLength;
@@ -41,36 +40,43 @@ public class Kmer implements Comparable<Kmer> {
         this.kmerLong = kmerToLong(kmer);
         if (isCanonical) {
             // get the lowest of the kmer and its reverse complement
-            this.kmerLong = Math.min(this.kmerLong, getReverseComplement(this.kmerLong, this.kmerLength));
+            long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
+            if (compareLongArrays(this.kmerLong, revComp) > 0) {
+                this.kmerLong = revComp;
+            }
         }
     }
 
-
-    public Kmer(long kmerLong, int kmerLength, int prefixLength, boolean isCanonical) {
+    public Kmer(long[] kmerLong, int kmerLength, int prefixLength, boolean isCanonical) {
         this.kmerLength = kmerLength;
         this.prefixLength = prefixLength;
         this.suffixLength = this.kmerLength - prefixLength;
         this.isCanonical = isCanonical;
-        this.kmerLong = kmerLong;
+        this.kmerLong = Arrays.copyOf(kmerLong, kmerLong.length);
         if (isCanonical) {
             // get the lowest of the kmer and its reverse complement
-            this.kmerLong = Math.min(this.kmerLong, getReverseComplement(this.kmerLong, this.kmerLength));
+            long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
+            if (compareLongArrays(this.kmerLong, revComp) > 0) {
+                this.kmerLong = revComp;
+            }
         }
     }
 
-    public Kmer(Kmer kmer, boolean isCanonical){
+    public Kmer(Kmer kmer, boolean isCanonical) {
         // copy the kmer and set the canonical status
         this.kmerLength = kmer.getKmerLength();
         this.prefixLength = kmer.getPrefixLength();
         this.suffixLength = kmer.getSuffixLength();
         this.isCanonical = isCanonical;
-        this.kmerLong = kmer.getKmerLong();
+        this.kmerLong = Arrays.copyOf(kmer.kmerLong, kmer.kmerLong.length);
         if (isCanonical) {
             // get the lowest of the kmer and its reverse complement
-            this.kmerLong = Math.min(this.kmerLong, getReverseComplement(this.kmerLong, this.kmerLength));
+            long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
+            if (compareLongArrays(this.kmerLong, revComp) > 0) {
+                this.kmerLong = revComp;
+            }
         }
     }
-
 
     public int getKmerLength() {
         return this.kmerLength;
@@ -84,221 +90,302 @@ public class Kmer implements Comparable<Kmer> {
         return this.suffixLength;
     }
 
-
     public String getSignatureString(Signature signature) {
         return longToKmer(this.getSignature(signature), signature.getSignLength());
     }
 
-    public long getKmerLong() {
+    public long[] getKmerLong() {
         return this.kmerLong;
-    }
-
-    /***
-     * Lazily calculates and returns the forward prefix as an integer.
-     */
-    public int getPrefixFwd() {
-        if (this.prefixFwd == null) {
-            this.prefixFwd = (int) (this.kmerLong >> this.suffixLength * 2);
-        }
-        return this.prefixFwd;
-    }
-
-    /***
-     * Lazily calculates and returns the forward suffix as a byte array.
-     */
-    public byte[] getSuffixFwd() {
-        if (this.suffixFwd == null) {
-            this.suffixFwd = extractSuffix(this.kmerLong, this.suffixLength);
-        }
-        return this.suffixFwd;
-    }
-
-
-    /***
-     * Lazily calculates and returns the reverse prefix as an integer.
-     */
-    public int getPrefixRev() {
-        if (this.prefixRev == null) {
-            // reverse complement the kmer and get the prefix
-            this.prefixRev = (int) (getReverseComplement(this.kmerLong, this.kmerLength) >> this.suffixLength * 2);
-        }
-        return this.prefixRev;
-    }
-
-    /***
-     * Lazily calculates and returns the reverse suffix as a byte array.
-     */
-    public byte[] getSuffixRev() {
-        if (this.suffixRev == null) {
-            // reverse complement the kmer and get the suffix
-            this.suffixRev = extractSuffix(getReverseComplement(this.kmerLong, this.kmerLength), this.suffixLength);
-        }
-        return this.suffixRev;
-    }
-
-    /***
-     * Converts the kmer's binary representation back to a nucleotide string.
-     * @return Nucleotide string
-     */
-    @Override
-    public String toString() {
-        return longToKmer(this.kmerLong, this.kmerLength);
-    }
-
-    @Override
-    public int compareTo(Kmer o) {
-        return Long.compare(this.kmerLong, o.kmerLong);
-    }
-
-    /***
-     * Check if kmer is equal to another kmer.
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Kmer) {
-            Kmer other = (Kmer) obj;
-            return this.kmerLong == other.kmerLong;
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.kmerLong);
-    }
-
-    /***
-     * Generates the forward suffix as a nucleotide string.
-     * @return Suffix nucleotide string
-     */
-    public String getSuffixForwardString() {
-        return convertBytesToKmer(getSuffixFwd(), this.suffixLength);
-    }
-
-    /***
-     * Generates the forward prefix as a nucleotide string.
-     * @return Prefix nucleotide string
-     */
-    public String getPrefixForwardString() {
-        return longToKmer(getPrefixFwd(), this.prefixLength);
-    }
-
-    /***
-     * Helper function to extract suffix from a binary representation.
-     * @param binaryKmer The binary representation of the k-mer
-     * @param suffixLength The length of the suffix to extract
-     * @return Byte array representation of the suffix
-     */
-    private byte[] extractSuffix(long binaryKmer, int suffixLength) {
-        byte[] suffix = new byte[(suffixLength + 3) / 4];
-        long suffixBits = binaryKmer & ((1L << (2 * suffixLength)) - 1);
-
-        // Pack the suffix into the byte array
-        for (int i = 0; i < suffixLength; ++i) {
-            int shift = (suffixLength - i - 1) * 2;
-            suffix[i / 4] |= (byte) (((suffixBits >> shift) & 0x3) << ((3 - i % 4) * 2));
-        }
-        return suffix;
-    }
-
-    /***
-     * Converts a byte array representation of a suffix to its nucleotide string.
-     * @param suffixBytes The byte array containing suffix information
-     * @param suffixLength The length of the suffix
-     * @return Suffix nucleotide string
-     */
-    private String convertBytesToKmer(byte[] suffixBytes, int suffixLength) {
-        StringBuilder suffix = new StringBuilder(suffixLength);
-        for (int i = 0; i < suffixLength; ++i) {
-            int baseIndex = (suffixBytes[i / 4] >> (6 - 2 * (i % 4))) & 0x03;
-            suffix.append(baseToChar(baseIndex));
-        }
-        return suffix.toString();
-    }
-
-    /***
-     * Converts a nucleotide base index to its character representation.
-     * @param baseIndex Base index (0, 1, 2, 3 for A, C, G, T)
-     * @return Nucleotide character
-     */
-    private char baseToChar(int baseIndex) {
-        return switch (baseIndex) {
-            case 0b00 -> 'A';
-            case 0b01 -> 'C';
-            case 0b10 -> 'G';
-            case 0b11 -> 'T';
-            default -> {
-                Logger.error(CLASS_NAME, "Invalid base index: " + baseIndex);
-                throw new IllegalArgumentException("Invalid base index: " + baseIndex);
-            }
-        };
     }
 
     /***
      * This method is used to get the signature of a kmer
      */
     public int getSignature(Signature signature) {
-
-        // get length of the signature to be computed form signature object
         int signatureLength = signature.getSignLength();
-        // get the first signature length bases of the kmer
-        int currentSignature = (int) (this.kmerLong >> (2 * (this.kmerLength - signatureLength)));
-        // Constrain currentSignature to valid range
+        int currentSignature = extractIntFromBits(this.kmerLong, 0, signatureLength);
         int minSignature = signature.getSignature(currentSignature);
-        for (int i = signatureLength; i < this.kmerLength; i++) {
-            currentSignature = (int) ((currentSignature << 2) | ((this.kmerLong >> (2 * (this.kmerLength - i - 1))) & 0x03));
-            // Constrain currentSignature to valid range
-            currentSignature &= (1 << (2 * signatureLength)) - 1;
 
-
-            // Check if the current signature is within the allowed range
-            if (currentSignature >= (1 << (2 * signatureLength))) {
-                Logger.error(CLASS_NAME, "Invalid signature (out of range): " + currentSignature);
-            }
-
-            // Check if the signature is valid
+        for (int i = 1; i <= this.kmerLength - signatureLength; i++) {
+            currentSignature = ((currentSignature << 2) & ((1 << (2 * signatureLength)) - 1)) |
+                    extractIntFromBits(this.kmerLong, i + signatureLength - 1, 1);
             if (signature.getSignature(currentSignature) < minSignature) {
                 minSignature = signature.getSignature(currentSignature);
             }
         }
-
         return minSignature;
     }
 
-    public static long kmerToLong(String kmer) {
-        return kmerToLong(kmer.toCharArray());
-    }
-
     /***
-     * This method is used to get the canonical status of a kmer
+     * Lazily calculates and returns the forward prefix as an integer.
      */
-    public static long kmerToLong(char[] kmer) {
-        long binaryKmer = 0;
-        for (char base : kmer) {
-            binaryKmer <<= 2; // Shift left by 2 bits
-            binaryKmer |= baseToBits(base); // Add the bits for the current base
+    public int getPrefixFwd() {
+        if (prefixFwd == null) {
+            prefixFwd = extractIntFromBits(kmerLong, 0, prefixLength);
         }
-        return binaryKmer;
+        return prefixFwd;
     }
 
     /***
-     * Converts a nucleotide base to a two-bit representation.
+     * Lazily calculates and returns the forward suffix as a byte array.
+     */
+    public byte[] getSuffixFwd() {
+        if (suffixFwd == null) {
+            suffixFwd = extractSuffix(kmerLong, kmerLength, prefixLength);
+        }
+        return suffixFwd;
+    }
+
+    /***
+     * extract suffix from the kmer long and convert that to a byte array.
+     */
+    private byte[] extractSuffix(long[] kmerLong, int kmerLength, int prefixLength) {
+        int suffixLength = kmerLength - prefixLength;
+        byte[] suffix = new byte[(suffixLength + 3) / 4];
+
+        int bitStart = 2 * prefixLength;
+        int totalBits = 2 * kmerLength;
+
+        for (int i = 0; i < suffixLength; ++i) {
+            int bitIndex = bitStart + i * 2;
+
+            int wordIndex = bitIndex / 64;
+            int bitOffset = bitIndex % 64;
+
+            int baseBits;
+            if (bitOffset <= 62) {
+                baseBits = (int) ((kmerLong[wordIndex] >> (62 - bitOffset)) & 0x3);
+            } else {
+                // Bits are split between two longs
+                int highBits = (int) ((kmerLong[wordIndex] & 1L) << 1);
+                int lowBits = (int) ((kmerLong[wordIndex + 1] >> 63) & 1L);
+                baseBits = highBits | lowBits;
+            }
+
+            suffix[i / 4] |= (byte) (baseBits << ((3 - i % 4) * 2));
+        }
+
+        return suffix;
+    }
+
+    /***
+     * extract the prefix from the kmer long and return that as an integer. [miscellaneous]
+     * @return
+     */
+    public int getPrefixRev() {
+        if (prefixRev == null) {
+            long[] rev = getReverseComplement(kmerLong, kmerLength);
+            prefixRev = extractIntFromBits(rev, 0, prefixLength);
+        }
+        return prefixRev;
+    }
+
+    /***
+     * extract the suffix from the kmer long and return that as a byte array. [miscellaneous]
+     * @return
+     */
+    public byte[] getSuffixRev() {
+        if (suffixRev == null) {
+            long[] rev = getReverseComplement(kmerLong, kmerLength);
+            suffixRev = Arrays.copyOfRange(kmerToBytes(rev, kmerLength), prefixLength, kmerLength);
+        }
+        return suffixRev;
+    }
+
+    /***
+     * get the reverse complement of the kmer long and return that as a string. [miscellaneous]
+     * @return
+     */
+    public String getReverseComplementKmer() {
+        if (reverseComplementKmer == null) {
+            reverseComplementKmer = longToKmer(getReverseComplement(kmerLong, kmerLength), kmerLength);
+        }
+        return reverseComplementKmer;
+    }
+
+    /***
+     * extract the integer value from the kmer long. used in the getSignature method to extract the best signature from the long kmer
+     * @param bitArray
+     * @param startBase
+     * @param lengthBases
+     * @return
+     */
+    private int extractIntFromBits(long[] bitArray, int startBase, int lengthBases) {
+        int result = 0;
+        for (int i = 0; i < lengthBases; i++) {
+            int bitIndex = (startBase + i) * 2;
+            int arrayIndex = bitIndex / 64;
+            int offset = bitIndex % 64;
+            int baseBits;
+            if (offset <= 62) {
+                baseBits = (int) ((bitArray[arrayIndex] >>> (62 - offset)) & 0x3);
+            } else {
+                int remaining = 64 - offset;
+                long firstPart = (bitArray[arrayIndex] & ((1L << remaining) - 1)) << (2 - remaining);
+                long secondPart = (bitArray[arrayIndex + 1] >>> (64 - (2 - remaining)));
+                baseBits = (int) (firstPart | secondPart) & 0x3;
+            }
+            result = (result << 2) | baseBits;
+        }
+        return result;
+    }
+
+    /***
+     * convert the kmer to a long array. used in the constructor to convert the kmer char array to a long array.
+     * @param kmer
+     * @return
+     */
+    public static long[] kmerToLong(char[] kmer) {
+        int totalBits = kmer.length * 2;
+        int arraySize = (totalBits + 63) / 64;
+        long[] result = new long[arraySize];
+
+        for (int i = 0; i < kmer.length; i++) {
+            int val = baseToBits(kmer[i]);
+            int bitIndex = i * 2;
+            int arrayIndex = bitIndex / 64;
+            int bitOffset = bitIndex % 64;
+
+            result[arrayIndex] |= ((long) val) << (62 - bitOffset);
+
+            // If split between two longs
+            if (bitOffset > 62) {
+                result[arrayIndex + 1] |= ((long) val) >>> (bitOffset - 62);
+            }
+        }
+
+        return result;
+    }
+
+    /***
+     * convert the kmer long array to a byte array. used in the getSuffixFwd and getSuffixRev methods to convert the kmer long array to a byte array.
+     * @param kmerLong
+     * @param kmerLength
+     * @return
+     */
+    public static byte[] kmerToBytes(long[] kmerLong, int kmerLength) {
+        byte[] bases = new byte[kmerLength];
+
+        for (int i = 0; i < kmerLength; i++) {
+            int bitIndex = i * 2;
+            int arrayIndex = bitIndex / 64;
+            int bitOffset = bitIndex % 64;
+
+            int bits;
+            if (bitOffset <= 62) {
+                bits = (int) ((kmerLong[arrayIndex] >>> (62 - bitOffset)) & 0b11);
+            } else {
+                int bitsInFirstLong = 64 - bitOffset;
+                long part1 = (kmerLong[arrayIndex] & ((1L << bitsInFirstLong) - 1)) << (2 - bitsInFirstLong);
+                long part2 = (kmerLong[arrayIndex + 1] >>> (64 - (2 - bitsInFirstLong)));
+                bits = (int) ((part1 | part2) & 0b11);
+            }
+
+            bases[i] = (byte) bits;
+        }
+
+        return bases;
+    }
+
+    /***
+     * convert the base to bits. used in the kmerToLong method to convert the kmer char array to a long array.
+     * @param base
+     * @return
      */
     private static int baseToBits(char base) {
         return switch (base) {
-            case 'A' -> 0b00; // A -> 00
-            case 'C' -> 0b01; // C -> 01
-            case 'G' -> 0b10; // G -> 10
-            case 'T' -> 0b11; // T -> 11
+            case 'A' -> 0b00;
+            case 'C' -> 0b01;
+            case 'G' -> 0b10;
+            case 'T' -> 0b11;
             default -> throw new IllegalArgumentException("Invalid nucleotide in k-mer: " + base);
         };
     }
 
     /***
-     * Converts a binary representation of a k-mer to a nucleotide string.
+     * get the reverse complement of the kmer long array. used in the constructor to get the reverse complement of the kmer long array.
+     * @param binaryKmer
+     * @param kmerLength
+     * @return
+     */
+    public static long[] getReverseComplement(long[] binaryKmer, int kmerLength) {
+        int totalBits = kmerLength * 2;
+        long[] reverse = new long[binaryKmer.length];
+
+        for (int i = 0; i < kmerLength; i++) {
+            // get the i-th base (forward)
+            int bitIndex = i * 2;
+            int arrayIndex = bitIndex / 64;
+            int bitOffset = bitIndex % 64;
+
+            int bits;
+            if (bitOffset <= 62) {
+                bits = (int) ((binaryKmer[arrayIndex] >>> (62 - bitOffset)) & 0b11);
+            } else {
+                int bitsInFirstLong = 64 - bitOffset;
+                long part1 = (binaryKmer[arrayIndex] & ((1L << bitsInFirstLong) - 1)) << (2 - bitsInFirstLong);
+                long part2 = (binaryKmer[arrayIndex + 1] >>> (64 - (2 - bitsInFirstLong)));
+                bits = (int) ((part1 | part2) & 0b11);
+            }
+
+            // get complement
+            int compBits = (~bits) & 0b11;
+
+            // set in reverse array
+            int revIndex = (kmerLength - i - 1) * 2;
+            int revArrayIndex = revIndex / 64;
+            int revOffset = revIndex % 64;
+
+            if (revOffset <= 62) {
+                reverse[revArrayIndex] |= ((long) compBits) << (62 - revOffset);
+            } else {
+                int bitsInFirstLong = 64 - revOffset;
+                reverse[revArrayIndex] |= ((long) compBits) >>> (2 - bitsInFirstLong);
+                reverse[revArrayIndex + 1] |= ((long) compBits) << (62 - (2 - bitsInFirstLong));
+            }
+        }
+
+        return reverse;
+    }
+
+    /***
+     * convert the kmer long array to a string. used in the toString method to convert the kmer long array to a string.
+     * @param binaryKmer
+     * @param kmerLength
+     * @return
      */
     public static String longToKmer(long binaryKmer, int kmerLength) {
-        return new String(binaryToKmer(binaryKmer, kmerLength));
+        return longToKmer(new long[]{binaryKmer}, kmerLength);
+    }
+
+    /***
+     * convert the kmer long array to a string. used in the toString method to convert the kmer long array to a string.
+     * @param binaryKmer
+     * @param kmerLength
+     * @return
+     */
+    public static String longToKmer(long[] binaryKmer, int kmerLength) {
+        char[] kmer = new char[kmerLength];
+
+        for (int i = 0; i < kmerLength; i++) {
+            int bitIndex = i * 2;
+            int arrayIndex = bitIndex / 64;
+            int bitOffset = bitIndex % 64;
+
+            int bits;
+            if (bitOffset <= 62) {
+                bits = (int) ((binaryKmer[arrayIndex] >>> (62 - bitOffset)) & 0b11);
+            } else {
+                int bitsInFirstLong = 64 - bitOffset;
+                long part1 = (binaryKmer[arrayIndex] & ((1L << bitsInFirstLong) - 1)) << (2 - bitsInFirstLong);
+                long part2 = (binaryKmer[arrayIndex + 1] >>> (64 - (2 - bitsInFirstLong)));
+                bits = (int) ((part1 | part2) & 0b11);
+            }
+
+            kmer[i] = bitsToBase(bits);
+        }
+
+        return new String(kmer);
     }
 
     /***
@@ -314,7 +401,9 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * Converts a two-bit representation of a base to its character representation.
+     * convert the bits to base. used in the longToKmer method to convert the kmer long array to a string.
+     * @param twoBits
+     * @return
      */
     private static char bitsToBase(int twoBits) {
         return switch (twoBits) {
@@ -327,42 +416,58 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * This method is used to get the reverse complement of a kmer in binary form
+     * compare two long arrays. used in the compareTo method to compare two kmer long arrays.
+     * @param a
+     * @param b
+     * @return
      */
-    public static long getReverseComplement(long binaryKmer, int kmerLength) {
-        long reverseComplement = 0;
-        for (int i = 0; i < kmerLength; i++) {
-            // Extract the last 2 bits (base)
-            long base = binaryKmer & 0b11;
-            // Complement the base: A (00) -> T (11), C (01) -> G (10), G (10) -> C (01), T (11) -> A (00)
-            base = (~base) & 0b11;
-            // Shift the complemented base to the reverse position
-            reverseComplement = (reverseComplement << 2) | base;
-            // Shift the original binaryKmer to process the next base
-            binaryKmer >>= 2;
+    private static int compareLongArrays(long[] a, long[] b) {
+        int len = Math.min(a.length, b.length);
+        for (int i = 0; i < len; i++) {
+            if (a[i] != b[i]) {
+                return Long.compareUnsigned(a[i], b[i]);
+            }
         }
-        return reverseComplement;
+        return Integer.compare(a.length, b.length);
     }
 
-
-    public String getPrefixReverseString() {
-        return longToKmer(getPrefixRev(), this.prefixLength);
+    @Override
+    public int compareTo(Kmer o) {
+        return compareLongArrays(this.kmerLong, o.kmerLong);
     }
 
-    public String getSuffixReverseString() {
-        return convertBytesToKmer(getSuffixRev(), this.suffixLength);
-    }
-
-    public String getRevKmerString() {
-        if (this.reverseComplementKmer == null) {
-            this.reverseComplementKmer = longToKmer(getReverseComplement(this.kmerLong, this.kmerLength), this.kmerLength);
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Kmer) {
+            Kmer other = (Kmer) obj;
+            return Arrays.equals(this.kmerLong, other.kmerLong);
         }
-        return this.reverseComplementKmer;
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(this.kmerLong);
+    }
+
+    @Override
+    public String toString() {
+        return longToKmer(this.kmerLong, this.kmerLength);
     }
 
     /***
-     * this method will insert a base at the end of the kmer and remove the first base and construct a new kmer
-     * make sure to use this with caution of the kmer is not canonical
+     * get the prefix forward as a string. used in the toString method to convert the kmer long array to a string. [miscellaneous]
+     * @return
+     */
+    public String getPrefixFwdStr() {
+        return longToKmer(getPrefixFwd(), this.prefixLength);
+    }
+
+    /***
+     * TODO: this could improve performance
+     * get the suffix forward as a string. used in the toString method to convert the kmer long array to a string. [miscellaneous]
+     * @param base
+     * @return
      */
     public Kmer insertBase(char base) {
         if (this.isCanonical) {
@@ -370,17 +475,27 @@ public class Kmer implements Comparable<Kmer> {
             throw new IllegalArgumentException("Cannot insert base into canonical kmer");
         }
 
-        // Convert the base to its 2-bit representation
-        long newBaseBits = baseToBits(base);
+        long[] newKmerLong = new long[this.kmerLong.length];
 
-        // Left-shift kmerLong by 2 bits to make space for the new base
-        long newKmer = (this.kmerLong << 2) | newBaseBits;
+        // shift left and insert base bits
+        for (int i = 0; i < this.kmerLong.length; i++) {
+            if (this.kmerLong.length == (i + 1)) {
+                newKmerLong[i] = (this.kmerLong[i] << 2) | baseToBits(base);
+            } else {
+                newKmerLong[i] = (this.kmerLong[i] << 2) | ((this.kmerLong[i + 1] >> 62) & 0b11);
+            }
+        }
 
-        // Mask to ensure newKmer remains within the bounds of the k-mer length
-        long mask = (1L << (2 * this.kmerLength)) - 1; // Create a mask for the k-mer length
-        newKmer &= mask;
+        // mask unused bits in the most significant word
+        int totalBits = 2 * this.kmerLength;
+        int unusedBits = (64 * this.kmerLong.length) - totalBits;
+        if (unusedBits > 0) {
+            long mask = -1L >>> unusedBits;  // Keep only the low `totalBits` bits
+            newKmerLong[0] &= mask;          // Apply mask to the highest word
+        }
 
-        return new Kmer(newKmer, this.kmerLength, this.prefixLength, this.isCanonical);
+        return new Kmer(newKmerLong, this.kmerLength, this.prefixLength, this.isCanonical);
     }
+
 }
 //EOF
