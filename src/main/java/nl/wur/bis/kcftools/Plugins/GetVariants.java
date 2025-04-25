@@ -3,9 +3,9 @@ package nl.wur.bis.kcftools.Plugins;
 import nl.wur.bis.kcftools.Data.*;
 import nl.wur.bis.kcftools.Utils.HelperFunctions;
 import nl.wur.bis.kcftools.Utils.Logger;
+
 import picocli.CommandLine;
 import picocli.CommandLine.*;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
