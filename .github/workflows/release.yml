@@ -1,0 +1,38 @@
+name: KCFTOOLS Release
+
+on:
+  push:
+    tags:
+      - 'v0.0.1'
+
+jobs:
+  release:
+    name: Build and Release ZIP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build with Maven
+        run: mvn clean package --no-transfer-progress
+
+      - name: Create ZIP with JAR
+        run: |
+          mkdir -p release
+          cp target/*.jar release/
+          cd release
+          zip kcftools-${{ github.ref_name }}.zip *.jar
+
+      - name: Upload ZIP to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/kcftools-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
