@@ -10,6 +10,9 @@ import picocli.CommandLine.*;
 
 import java.util.concurrent.Callable;
 
+/***
+ * This is a command line plugin that splits the KCF file into separate files for each chromosome
+ */
 @Command(name = "splitKCF", description = "Split KCF file for each chromosome")
 public class SplitKCF implements Callable<Integer>, Runnable {
     // in KCF file name
@@ -54,7 +57,6 @@ public class SplitKCF implements Callable<Integer>, Runnable {
         }
         try (KCFReader reader = new KCFReader(kcfFile)) {
             KCFHeader header = reader.getHeader();
-            String[] samples = header.getSamples();
             String[] chromosomes = header.getContigs();
             for (String chromosome : chromosomes) {
                 try (KCFWriter writer = new KCFWriter(outDir + "/" + chromosome + ".kcf")) {
@@ -71,3 +73,4 @@ public class SplitKCF implements Callable<Integer>, Runnable {
         }
     }
 }
+//EOF

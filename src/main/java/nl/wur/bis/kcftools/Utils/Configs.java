@@ -1,7 +1,10 @@
 package nl.wur.bis.kcftools.Utils;
 
+/***
+ * Enum to store the configuration values for the KCF file format
+ */
 public enum Configs {
-    KCF_VERSION("0.1"),
+    KCF_VERSION("0.0.1"),
     KCF_SOURCE("kcftools"),
     KCF_DATE(HelperFunctions.getTodayDate()),
     KCF_INFO_LINES(
@@ -22,7 +25,9 @@ public enum Configs {
                     <ID=IB,Type=Integer,Description="IBS number">
                     <ID=VA,Type=Integer,Description="Variations">
                     <ID=OB,Type=Integer,Description="Observed kmers">
-                    <ID=DI,Type=Integer,Description="Kmer Variation Distance">
+                    <ID=ID,Type=Integer,Description="Inner Distance">
+                    <ID=LD,Type=Integer,Description="Kmer Variation Distance at the leftTail">
+                    <ID=RD,Type=Integer,Description="Kmer Variation Distance at the rightTail">
                     <ID=SC,Type=Float,Description="Score">"""
     );
 
@@ -36,3 +41,4 @@ public enum Configs {
         return value;
     }
 }
+//EOF

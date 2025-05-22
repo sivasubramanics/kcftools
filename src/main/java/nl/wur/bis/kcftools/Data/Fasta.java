@@ -12,7 +12,8 @@ import static nl.wur.bis.kcftools.Utils.HelperFunctions.fold_seq;
  */
 public class Fasta implements Serializable {
     private static final int FOLDLEN = 60;
-    private final Object lock = new Object(); // Synchronization lock for thread safety
+    // sync lock for thread safety
+    private final Object lock = new Object();
 
     private int id;
     private String name;
@@ -37,56 +38,9 @@ public class Fasta implements Serializable {
         this.description = description;
     }
 
-    public int getId() {
-        synchronized (lock) {
-            return id;
-        }
-    }
-
-    public String getName() {
-        synchronized (lock) {
-            return name;
-        }
-    }
-
-    public String getSequence() {
-        synchronized (lock) {
-            return sequence;
-        }
-    }
-
-    public String getQuality() {
-        return ""; // No mutable state, remains safe
-    }
-
-    public String getDescription() {
-        synchronized (lock) {
-            return description;
-        }
-    }
-
-    public void setName(String name) {
-        synchronized (lock) {
-            this.name = name;
-        }
-    }
-
-    public void setSequence(String sequence) {
-        synchronized (lock) {
-            this.sequence = sequence;
-        }
-    }
-
-    public void setQuality(String s) {
-        // do nothing
-    }
-
-    public void setId(int id) {
-        synchronized (lock) {
-            this.id = id;
-        }
-    }
-
+    /***
+     * This method will write the fasta file to the given writer
+     */
     public void writeFasta(BufferedWriter writer) {
         synchronized (lock) {
             try {
@@ -98,19 +52,11 @@ public class Fasta implements Serializable {
         }
     }
 
-    public void setDescription(String description) {
-        synchronized (lock) {
-            this.description = description;
-        }
-    }
 
-    @Override
-    public String toString() {
-        synchronized (lock) {
-            return ">" + name + " " + description + "\n" + fold_seq(sequence, FOLDLEN);
-        }
-    }
 
+    /***
+     * Get fasta formatted string for the sequence
+     */
     public String toFastaString(boolean fold) {
         synchronized (lock) {
             if (fold) {
@@ -121,18 +67,17 @@ public class Fasta implements Serializable {
         }
     }
 
-    public int length() {
-        synchronized (lock) {
-            return sequence.length();
-        }
-    }
-
+    /***
+     * Get the length of the sequence
+     */
     public int getLength() {
         synchronized (lock) {
             return sequence.length();
         }
     }
-
+    /***
+     * Convert the sequence to uppercase
+     */
     public String getUppercaseSequence() {
         synchronized (lock) {
             return sequence.toUpperCase();
@@ -154,6 +99,7 @@ public class Fasta implements Serializable {
                 if (!isValidBase(base)) {
                     validStart = i + 1;
                     kmer = null;
+                    kmerChars = new char[kmerLength];
                     continue;
                 }
 
@@ -164,7 +110,12 @@ public class Fasta implements Serializable {
                         kmer = new Kmer(kmerChars, prefixLength, useCanonical);
                     }
                 } else if (kmer != null) {
-                    kmer = kmer.insertBase(base);
+                    // TODO:
+                    // below line is to be implemented in a better way to improve the performance
+//                    kmer = kmer.insertBase(base);
+                    System.arraycopy(kmerChars, 1, kmerChars, 0, kmerLength - 1);
+                    kmerChars[kmerLength - 1] = base;
+                    kmer = new Kmer(kmerChars, prefixLength, useCanonical);
                 }
 
                 if (kmer != null) {
@@ -176,12 +127,16 @@ public class Fasta implements Serializable {
     }
 
     /***
-     * This method will return the true if the base is valid
+     * This method will return true if the base is valid
      */
     private boolean isValidBase(char base) {
         return base == 'A' || base == 'C' || base == 'G' || base == 'T';
     }
 
+    /***
+     * Get number of effective ATGC bases in the sequence that can be used to extract kmers
+     * if < kmerLength ATGC is flagged with N, then it will skip
+     */
     public int getEffectiveATGCCount(int kmerLength) {
         synchronized (lock) {
             int count = 0;
@@ -190,19 +145,19 @@ public class Fasta implements Serializable {
             for (int i = 0; i < sequence.length(); i++) {
                 char base = Character.toUpperCase(sequence.charAt(i));
 
-                // Check if the base is one of A, T, G, C
+                // check if the base is one of A, T, G, C
                 if (base == 'A' || base == 'T' || base == 'G' || base == 'C') {
                     stretchLength++;
                 } else {
-                    // End of a stretch: check if it's long enough
+                    // end of a stretch: check if it's long enough
                     if (stretchLength >= kmerLength) {
                         count += stretchLength;
                     }
-                    stretchLength = 0; // Reset stretch length
+                    stretchLength = 0;
                 }
             }
 
-            // Handle the last stretch, if the sequence ends with ATGC
+            // handle the last stretch, if the sequence ends with ATGC
             if (stretchLength >= kmerLength) {
                 count += stretchLength;
             }
@@ -210,4 +165,60 @@ public class Fasta implements Serializable {
             return count;
         }
     }
+
+    @Override
+    public String toString() {
+        synchronized (lock) {
+            return ">" + name + " " + description + "\n" + fold_seq(sequence, FOLDLEN);
+        }
+    }
+
+    public int getId() {
+        synchronized (lock) {
+            return id;
+        }
+    }
+
+    public String getName() {
+        synchronized (lock) {
+            return name;
+        }
+    }
+
+    public String getSequence() {
+        synchronized (lock) {
+            return sequence;
+        }
+    }
+
+    public String getDescription() {
+        synchronized (lock) {
+            return description;
+        }
+    }
+
+    public void setName(String name) {
+        synchronized (lock) {
+            this.name = name;
+        }
+    }
+
+    public void setSequence(String sequence) {
+        synchronized (lock) {
+            this.sequence = sequence;
+        }
+    }
+
+    public void setId(int id) {
+        synchronized (lock) {
+            this.id = id;
+        }
+    }
+
+    public void setDescription(String description) {
+        synchronized (lock) {
+            this.description = description;
+        }
+    }
 }
+//EOF

@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+# set default mirror
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 # check if packages ggplot2, dplyr, ggforce are installed, if not install them and load them silently
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -143,7 +145,8 @@ p <- ggplot() +
     plot.margin = margin(10, 10, 10, 10)  # Add some margin around the plot
   )
 
-plot_height <- (2 * nrow(sample_backgrounds))+1
+# plot_height <- (2 * nrow(sample_backgrounds))+1
+plot_height <- min((2 * nrow(sample_backgrounds)) + 1, 49)
 ggsave(out, p, height = plot_height, width = 24, dpi = 300)
  
 

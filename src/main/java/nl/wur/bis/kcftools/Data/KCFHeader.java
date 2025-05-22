@@ -100,10 +100,17 @@ public class KCFHeader implements Comparable<KCFHeader> {
         }
     }
 
+    /***
+     * Get a String array of all the contig/chromosome/scaffold names
+     * @return
+     */
     public String[] getContigs(){
         return contigs != null ? contigs.keySet().toArray(new String[0]) : null;
     }
 
+    /***
+     * Get a set of Param Key-Value pairs
+     */
     private Pair getParam(String line) {
         String[] fields = line.substring(9, line.length()-1).split(",");
         String key = fields[0].substring(3);
@@ -111,34 +118,58 @@ public class KCFHeader implements Comparable<KCFHeader> {
         return new Pair(key, value);
     }
 
+    /***
+     * Get Weight for obs/total kmers
+     */
     public double getWeightKmerRatio(){
         return this.params[6] != null ? Double.parseDouble(this.params[6].getValue()) : 0.0;
     }
 
+    /***
+     * Set Weight for obs/total kmers
+     */
     public void setWeightKmerRatio(double wtk){
         this.params[6] = new Pair("wtk", String.valueOf(wtk));
     }
 
+    /***
+     * Get Weight for tail distance
+     */
     public double getWeightTailDist(){
         return this.params[5] != null ? Double.parseDouble(this.params[5].getValue()) : 0.0;
     }
 
+    /***
+     * Set Weight for tail distance
+     */
     public void setWeightTailDist(double wtt){
         this.params[5] = new Pair("wtt", String.valueOf(wtt));
     }
 
+    /***
+     * Get Weight for inner distance
+     */
     public double getWeightInnerDist(){
         return this.params[4] != null ? Double.parseDouble(this.params[4].getValue()) : 0.0;
     }
 
+    /***
+     * Set Weight for inner distance
+     */
     public void setWeightInnerDist(double wti){
         this.params[4] = new Pair("wti", String.valueOf(wti));
     }
 
+    /***
+     * Get the number of windows
+     */
     public int getWindowCount(){
         return this.params[3] != null ? Integer.parseInt(this.params[3].getValue()) : 0;
     }
 
+    /***
+     * Set the number of windows (this is important for the IBS processing)
+     */
     public void setWindowCount(int nunWindow){
         this.params[3] = new Pair("nwindow", String.valueOf(nunWindow));
     }
@@ -175,6 +206,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         this.samples = sampleNames;
     }
 
+    /***
+     * Add a sample name to the list of samples
+     */
     public void addSample(String sampleName){
         if (samples == null){
             samples = new String[0];
@@ -185,6 +219,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         samples = newSampleNames;
     }
 
+    /***
+     * Append a list of sample names to the list of samples
+     */
     public void addSample(String[] sampleNames){
         if (samples == null){
             samples = new String[0];
@@ -195,6 +232,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         samples = newSampleNames;
     }
 
+    /***
+     * Add a command line to the list of command lines
+     */
     public void addCommandLine(String commandLine){
         if (commandLines == null){
             commandLines = new ArrayList<>();
@@ -202,6 +242,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         commandLines.add(commandLine);
     }
 
+    /***
+     * Add a contig name and length to the list of contigs
+     */
     public void addContig(String name, int length){
         if (contigs == null){
             contigs = new LinkedHashMap<>();
@@ -209,6 +252,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         contigs.put(name, length);
     }
 
+    /***
+     * Reference genome of the which the getVariants are called
+     */
     public void setReference(String reference){
         this.reference = reference;
     }
@@ -348,6 +394,9 @@ public class KCFHeader implements Comparable<KCFHeader> {
         return 0;
     }
 
+    /***
+     * Merge the header of the KCF file with the current header
+     */
     public void mergeHeader(KCFHeader tmpHeader) {
         if (!this.equals(tmpHeader)){
             Logger.error(CLASSNAME, "Headers mismatch found in the KCF files");
@@ -362,19 +411,31 @@ public class KCFHeader implements Comparable<KCFHeader> {
         }
     }
 
+    /***
+     * Get the command lines used to generate the KCF file
+     */
     private String[] getCMDlines() {
         return commandLines != null ? commandLines.toArray(new String[0]) : null;
     }
 
+    /***
+     * Check if the sample name is in the list of samples
+     */
     public boolean hasSample(String sampleName) {
         return samples != null && Arrays.asList(samples).contains(sampleName);
     }
 
+    /***
+     * Get the weight of the parameters
+     */
     public double[] getWeights() {
         return new double[]{getWeightInnerDist(), getWeightTailDist(), getWeightKmerRatio()};
     }
 }
 
+/**
+ * Pair class to store key-value pairs
+ */
 class Pair{
     private final String key;
     private final String value;

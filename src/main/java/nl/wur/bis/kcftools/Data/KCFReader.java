@@ -25,6 +25,9 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
         Logger.info(CLASS_NAME, "Reading KCF file:" + filename);
     }
 
+    /***
+     * Parse the header of the KCF file and returns a KCFHeader object
+     */
     public KCFHeader getHeader() {
         if (header == null) {
             try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
@@ -52,6 +55,9 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
         // Nothing to do
     }
 
+    /***
+     * Returns the next window in the KCF file
+     */
     private class WindowIterator implements Iterator<Window> {
         private final BufferedReader reader;
         private String nextLine;

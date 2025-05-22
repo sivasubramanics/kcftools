@@ -51,10 +51,13 @@ public class Window implements Comparable<Window> {
         for (int i = 7; i < fields.length; i++){
             String[] sampleData = fields[i].split(":");
             // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:score
-            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), totalKmers, effLength, sampleData[0], weights));
+            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), Integer.parseInt(sampleData[5]), totalKmers, effLength, sampleData[0], weights));
         }
     }
 
+    /***
+     * Add data to the window
+     */
     public void addData(HashMap<String, Data> data){
         for (String sample : data.keySet()){
             if (this.data.containsKey(sample)){
@@ -65,12 +68,16 @@ public class Window implements Comparable<Window> {
         }
     }
 
-    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int tailDistance, String ibs, double[] weights) {
-        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0, totalKmers, effLength, weights));
+    /***
+     * Add data to the window
+     */
+    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int leftDistance, int rightDistance, String ibs, double[] weights) {
+        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0,0, totalKmers, effLength, weights));
         d.observedKmers = observedKmers;
         d.variations = variations;
         d.innerDistance = innerDistance;
-        d.tailDistance = tailDistance;
+        d.rightDistance = rightDistance;
+        d.leftDistance = leftDistance;
         d.score = d.computeScore(totalKmers, effLength, weights);
         d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
@@ -105,6 +112,9 @@ public class Window implements Comparable<Window> {
                 "MV=" + meanVariations;
     }
 
+    /***
+     * Parse the info field to a map
+     */
     private HashMap<String, String> getInfoFieldMap(String infoField) {
         HashMap<String, String> info = new LinkedHashMap<>();
         String[] fields = infoField.split(";");
@@ -119,9 +129,12 @@ public class Window implements Comparable<Window> {
     }
 
     private String getFormatField() {
-        return "GT:VA:OB:ID:TD:SC";
+        return "GT:VA:OB:ID:LD:RD:SC";
     }
 
+    /***
+     * Calculate the stats for the window to be used in the info field
+     */
     public void calculateStats(){
         minObservedKmers = Integer.MAX_VALUE;
         maxObservedKmers = Integer.MIN_VALUE;
@@ -168,7 +181,6 @@ public class Window implements Comparable<Window> {
     public synchronized void addTotalKmers(int totalKmersCount){
         totalKmers += totalKmersCount;
     }
-
 
     public Fasta getFasta(FastaIndex index) {
         return new Fasta(1, String.valueOf(windowId), index.getSequence(sequenceName, start, length()), sequenceName + ":" + start + "-" + end);
@@ -218,6 +230,9 @@ public class Window implements Comparable<Window> {
         return end;
     }
 
+    /***
+     * Order the samples in the data map according to the order in the header
+     */
     public void alignSamplesWithHeader(String[] headerSamples) {
         HashMap<String, Data> alignedData = new LinkedHashMap<>();
         for (String sample : headerSamples) {
@@ -259,7 +274,6 @@ public class Window implements Comparable<Window> {
     }
 
     public String toTSV(String sample) {
-        // return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
         return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
     }
 
@@ -269,6 +283,14 @@ public class Window implements Comparable<Window> {
 
     public int getEffLength() {
         return effLength;
+    }
+
+    public int getInnerDistance(String sample) {
+        return data.get(sample).getInnerDistance();
+    }
+
+    public int getTailDistance(String sample) {
+        return data.get(sample).getTailDistance();
     }
 }
 // EOF
