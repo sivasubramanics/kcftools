@@ -21,6 +21,9 @@ public class KCFWriter implements AutoCloseable {
         Logger.info(CLASS_NAME, "Writing KCF file: " + filename);
     }
 
+    /***
+     * Write the KCF file with the given header and windows
+     */
     public void writeKCF(KCFHeader header, Iterable<Window> windows) throws IOException {
         if (header.getSamples() == null) {
             throw new IllegalArgumentException("Sample name not set in KCF header");
@@ -29,6 +32,9 @@ public class KCFWriter implements AutoCloseable {
         writeWindows(windows);
     }
 
+    /***
+     * Write the header
+     */
     public void writeHeader(KCFHeader header) {
         this.header = header;
         try {
@@ -38,6 +44,9 @@ public class KCFWriter implements AutoCloseable {
         }
     }
 
+    /***
+     * Write a single window
+     */
     public void writeWindow(Window window) {
         try {
             if (header.getSamples().length != window.getSamples().length) {
@@ -50,6 +59,9 @@ public class KCFWriter implements AutoCloseable {
         }
     }
 
+    /***
+     * Write multiple windows
+     */
     public void writeWindows(Iterable<Window> windows) throws IOException {
         for (Window window : windows) {
             writeWindow(window);
@@ -57,6 +69,7 @@ public class KCFWriter implements AutoCloseable {
         writer.flush();
     }
 
+    @Override
     public void close() {
         try {
             writer.close();

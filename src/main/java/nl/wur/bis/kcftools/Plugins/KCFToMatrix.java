@@ -58,6 +58,9 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
         return 0;
     }
 
+    /***
+     * Main method to convert KCF to matrix
+     */
     private void convertKCFToMatrix() {
         try (KCFReader reader = new KCFReader(inFile);
              BufferedWriter writer = new BufferedWriter(new java.io.FileWriter(outPrefix + ".matrix.tsv"));
@@ -66,6 +69,8 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
             int[][] matrix = new int[header.getSamples().length][header.getWindowCount()];
             String[] samples = header.getSamples();
             int i = 0;
+            mapWriter.write("Name\tChromosome\tPosition");
+            mapWriter.newLine();
             for (Window window : reader) {
                 mapWriter.write(window.getSequenceName() + "\t" + window.getStart() + "\t" + window.getEnd());
                 mapWriter.newLine();
@@ -88,6 +93,8 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
                 }
                 i++;
             }
+            mapWriter.flush();
+            Logger.info(CLASSNAME, "Generated Map file: " + outPrefix + ".map.tsv");
             // write the matrix
             writer.write("sample");
             for (int k = 0; k < header.getWindowCount(); k++) {
@@ -101,6 +108,9 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
                 }
                 writer.newLine();
             }
+            // close the writers
+            writer.flush();
+            Logger.info(CLASSNAME, "Generated Matrix file: " + outPrefix + ".matrix.tsv");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,25 +119,31 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
         }
     }
 
-    // convert matrix to Rdata
+    /***
+     * Convert the matrix to RData
+     */
     private void convertGTmatrixToRdata(String matrixFile, String mapFile) {
         // check for Rscript is installed
         if (!HelperFunctions.isInstalled("Rscript")) {
             Logger.error(CLASSNAME, "Rscript is not installed. Please install Rscript and try again.");
         }
+        Logger.info(CLASSNAME, "Converting matrix to RData");
         // create random name for R script based on the current time point
         String rscriptName = "convertGTmatrixToRdata_" + System.currentTimeMillis() + ".R";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(rscriptName))) {
             writer.write("myGD <- read.table(\"" + matrixFile + "\", header = TRUE, sep = \"\\t\")\n");
-            writer.write("save(myGD, file = \"" + matrixFile.replace(".tsv$", ".RData") + "\")\n");
+            writer.write("save(myGD, file = \"" + matrixFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
             writer.write("myGM <- read.table(\"" + mapFile + "\", header = FALSE, sep = \"\\t\")\n");
-            writer.write("save(myGM, file = \"" + mapFile.replace(".tsv$", ".RData") + "\")\n");
+            writer.write("save(myGM, file = \"" + mapFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         // run the R script
         try {
+            Logger.info(CLASSNAME, "Running Rscript: " + rscriptName);
             HelperFunctions.tryExec("Rscript " + rscriptName);
+            // delete the R script
+            HelperFunctions.deleteFile(rscriptName);
         }
         catch (Exception e) {
             Logger.error(CLASSNAME, "Error while running Rscript: " + e.getMessage());

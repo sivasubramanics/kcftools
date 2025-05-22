@@ -1,6 +1,5 @@
 package nl.wur.bis.kcftools.Plugins;
 
-
 import nl.wur.bis.kcftools.Data.KCFHeader;
 import nl.wur.bis.kcftools.Data.KCFReader;
 import nl.wur.bis.kcftools.Data.Window;
@@ -12,6 +11,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/***
+ * Convert the KCF windows to TSV file (just to validate with IBSpy results)
+ * The output file will have the following columns:
+ * 1. seqname
+ * 2. start
+ * 3. end
+ * 4. total_kmers
+ * 5. observed_kmers
+ * 6. variations
+ * 7. kmer_distance
+ */
 @Command(name = "kcf2tsv", description = "Convert KCF file to TSV file (IBSpy like)")
 public class KCFToTSV implements Callable<Integer>, Runnable {
     private final String CLASSNAME = this.getClass().getSimpleName();
@@ -46,6 +56,9 @@ public class KCFToTSV implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Main method to convert KCF file to TSV file
+     */
     private void kcfToTSV() {
         try (KCFReader reader = new KCFReader(kcfFile)) {
             KCFHeader header = reader.getHeader();
@@ -73,6 +86,9 @@ public class KCFToTSV implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Write the TSV file for the given sample
+     */
     private void writeTSV(Window[] windows,String sample){
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile + "." + sample + ".tsv"))) {
             writer.write("seqname\tstart\tend\ttotal_kmers\tobserved_kmers\tvariations\tkmer_distance\n");
@@ -84,3 +100,4 @@ public class KCFToTSV implements Callable<Integer>, Runnable {
         }
     }
 }
+//EOF

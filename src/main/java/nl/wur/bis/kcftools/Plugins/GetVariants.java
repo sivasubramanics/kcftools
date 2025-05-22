@@ -12,6 +12,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/***
+ * This is a command line plugin that may extract kmers from the reference file and compare them to the KMC database
+ * It will detect the variations in the kmers and write them to a KCF file
+ */
 @Command(name = "getVariations", description = " Screen for reference kmers that are not present in the KMC database, and detect variation", sortOptions = false)
 public class GetVariants implements Callable<Integer>, Runnable {
     // in reference file name
@@ -78,7 +82,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
     }
 
     /***
-     * Get the variations
+     * Main function to get the variations
      */
     public void getVariations() throws IOException {
 
@@ -94,8 +98,6 @@ public class GetVariants implements Callable<Integer>, Runnable {
         header.setWeightInnerDist(innerDistanceWeight);
         header.setWeightTailDist(tailDistanceWeight);
         header.setWeightKmerRatio(kmerRatioWeight);
-
-
 
         index = new FastaIndex(refFasta);
         ConcurrentHashMap<String, Queue<Window>> windowsMap = new ConcurrentHashMap<>();
@@ -236,7 +238,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
                 }
             }
 
-            // Process the last gap if it exists
+            // process the last gap if it exists
             if (gapSize > 0) {
                 localVariation++;
                 localRightDist += gapSize;

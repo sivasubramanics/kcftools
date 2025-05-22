@@ -17,6 +17,12 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/***
+ * CompareIBS compares the IBS windows between two mapping and builds an all vs all matrix.
+ * It uses the KMC library to find common kmers between the two references.
+ * The output is written to a file specified by the user.
+ * TODO: under development *DONOT USE*
+ */
 @Command(name = "compareIBS", description = "Compare IBS windows between two mapping and build a all vs all matrix")
 public class CompareIBS implements Callable<Integer>, Runnable {
     @Option(names = {"--refOne"}, description = "Reference one file name", required = true)
@@ -62,6 +68,9 @@ public class CompareIBS implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Compare the IBS windows between two mapping and build an all vs all matrix.
+     */
     private void compareIBS() throws IOException {
         try {
             HashMap<String, ArrayList<String[]>> refOneIBS = readIBSsummaryFile(ibsSummaryFileOne);
@@ -111,6 +120,9 @@ public class CompareIBS implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Get the common kmers between two references.
+     */
     private String[] getCommonKmers(String[] refOneFields, FastaIndex indexOne, String[] refTwoFields, FastaIndex indexTwo, KMC kmc) {
         int[] stats = new int[]{0, 0, 0, 0};
         // get fasta for refOne for the start and end
@@ -136,23 +148,27 @@ public class CompareIBS implements Callable<Integer>, Runnable {
         return new String[]{refOneFields[2], refOneFields[3], refOneFields[4], refTwoFields[2], refTwoFields[3], refTwoFields[4], Integer.toString(stats[0]), Integer.toString(stats[1]), Integer.toString(stats[2]), Integer.toString(stats[3])};
     }
 
+
+    /***
+     * Get the common kmers between two lists of kmers.
+     */
     public static List<Kmer> getUniqueCommonKmersSorted(List<Kmer> list1, List<Kmer> list2) {
-        // Determine the smaller list for HashSet conversion to minimize memory usage
+        // determine the smaller list for HashSet conversion to minimize memory usage
         List<Kmer> smallerList = (list1.size() <= list2.size()) ? list1 : list2;
         List<Kmer> largerList = (list1.size() > list2.size()) ? list1 : list2;
 
-        // Use a HashSet for fast lookup and avoid duplicates
+        // use a HashSet for fast lookup and avoid duplicates
         HashSet<Kmer> set = new HashSet<>(smallerList);
         Set<Kmer> commonElements = new HashSet<>();
 
-        // Iterate over the larger list and check for common elements
+        // iterate over the larger list and check for common elements
         for (Kmer kmer : largerList) {
             if (set.contains(kmer)) {
                 commonElements.add(kmer); // Add to the result set
             }
         }
 
-        // Convert the set of common elements to a list
+        // convert the set of common elements to a list
         return new ArrayList<>(commonElements);
     }
 
@@ -181,5 +197,5 @@ public class CompareIBS implements Callable<Integer>, Runnable {
 
         return summaryIBS;
     }
-
 }
+//EOF

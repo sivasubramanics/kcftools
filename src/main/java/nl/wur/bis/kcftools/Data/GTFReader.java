@@ -8,6 +8,11 @@ import java.util.stream.Stream;
 
 import static nl.wur.bis.kcftools.Utils.HelperFunctions.reverseComplement;
 
+/***
+ * GTFReader class to read and parse GTF files.
+ * It builds a hierarchical structure of genes, transcripts, and features.
+ * It also provides methods to extract sequences from a FASTA file based on the GTF features.
+ */
 public class GTFReader {
 
     private Map<String, Feature> genes;
@@ -17,6 +22,7 @@ public class GTFReader {
 
     private String CLASSNAME = this.getClass().getSimpleName();
 
+    // no-arg constructor
     public GTFReader() {
     }
 
@@ -28,7 +34,9 @@ public class GTFReader {
         readGTF(filePath);
     }
 
-    // Reads a GTF file and builds the hierarchical structure
+    /***
+     * Read a GTF file and parse its contents into a hierarchical structure of genes, transcripts, and features.
+     */
     public void readGTF(String filePath) throws IOException {
         Logger.info(CLASSNAME, "Reading GTF file: " + filePath);
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -46,21 +54,21 @@ public class GTFReader {
                 String strand = fields[6];
                 String attributes = fields[8];
 
-                // Extract identifiers
+                // extract identifiers (no so easy task for any non-standard GTF files, so be careful)
                 String geneId = extractAttribute(attributes, "gene_id");
                 String transcriptId = extractAttribute(attributes, "transcript_id");
 
-                // Create a Feature object
+                // create a Feature object
                 String featureId = type.equals("gene") ? geneId : transcriptId;
                 if (featureId == null) continue;
 
                 Feature feature = new Feature(type, chrom, start, end, strand, featureId);
 
-                // Link features based on type
+                // link features based on type
                 if (type.equals("gene")) {
                     genes.putIfAbsent(geneId, feature);
                     geneIDs.add(geneId);
-                } else if (type.equals("transcript")) {
+                } else if (type.equals("transcript") || type.equals("mRNA")) {
                     if (!genes.containsKey(geneId)) {
                         Feature geneFeature = new Feature(type, chrom, start, end, strand, geneId);
                         genes.putIfAbsent(geneId, geneFeature);
@@ -68,9 +76,10 @@ public class GTFReader {
                     Feature gene = genes.get(geneId);
                     feature.parent = gene;
                     gene.addChild(feature);
-                    transcriptToGene.put(transcriptId, geneId); // Map transcript to its parent gene
+                    // map transcript to its parent gene
+                    transcriptToGene.put(transcriptId, geneId);
                     transcriptIDs.add(transcriptId);
-                } else { // For exons, CDS, etc.
+                } else { // for exons, CDS, etc.
                     String parentGeneId = transcriptToGene.get(transcriptId);
                     if (parentGeneId != null) {
                         Feature gene = genes.get(parentGeneId);
@@ -86,7 +95,7 @@ public class GTFReader {
                 }
             }
 
-            // Sort all children by start position
+            // sort all children by start position
             for (Feature gene : genes.values()) {
                 gene.sortChildrenByStart();
                 for (Feature transcript : gene.children) {
@@ -141,13 +150,13 @@ public class GTFReader {
         Feature gene = genes.get(geneId);
         if (gene == null) return null;
 
-        // Extract, gene start and end and fetch sequences
+        // extract, gene start and end and fetch sequences
         String sequence = getFeatureSequence(
                 Stream.of(gene),
                 fastaIndex
         );
 
-        // Reverse complement if on the negative strand
+        // reverse complement if on the negative strand
         if (gene.strand.equals("-")) {
             sequence = reverseComplement(sequence);
         }
@@ -162,13 +171,13 @@ public class GTFReader {
         Feature transcript = findFeatureById(transcriptId, "transcript");
         if (transcript == null) return null;
 
-        // Extract, stitch, and fetch sequences for all exons of the transcript
+        // extract, stitch, and fetch sequences for all exons of the transcript
         String sequence = getFeatureSequence(
                 transcript.children.stream().filter(f -> f.type.equals("exon")),
                 fastaIndex
         );
 
-        // Reverse complement if on the negative strand
+        // reverse complement if on the negative strand
         if (transcript.strand.equals("-")) {
             sequence = reverseComplement(sequence);
         }
@@ -183,7 +192,7 @@ public class GTFReader {
         Feature exon = findFeatureById(exonId, "exon");
         if (exon == null) return null;
 
-        // Fetch the sequence directly
+        // fetch the sequence directly
         String sequence = exon.getSequence(fastaIndex);
         if (exon.strand.equals("-")) {
             sequence = reverseComplement(sequence);
@@ -199,7 +208,7 @@ public class GTFReader {
         Feature cds = findFeatureById(cdsId, "CDS");
         if (cds == null) return null;
 
-        // Fetch the sequence directly
+        // fetch the sequence directly
         String sequence = cds.getSequence(fastaIndex);
         if (cds.strand.equals("-")) {
             sequence = reverseComplement(sequence);

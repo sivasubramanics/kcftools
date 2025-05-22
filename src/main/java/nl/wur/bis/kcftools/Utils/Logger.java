@@ -3,6 +3,9 @@ package nl.wur.bis.kcftools.Utils;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/***
+ * Logger class to log messages to the console with different log levels
+ */
 public class Logger {
     public enum LogLevel {
         INFO, WARNING, ERROR, DEBUG, UNKNOWN
@@ -28,6 +31,9 @@ public class Logger {
         }
     }
 
+    /**
+     * Converts the log level to a string representation
+     */
     private static String logLevelToString(LogLevel logLevel) {
         return switch (logLevel) {
             case INFO -> "INFO    ";
@@ -38,19 +44,32 @@ public class Logger {
         };
     }
 
+    /***
+     * Log a message with the INFO log level
+     */
     public static void info(String className, String message) {
         log(LogLevel.INFO, className, message);
     }
 
+    /***
+     * Log a message with the WARNING log level
+     */
     public static void warning(String className, String message) {
         log(LogLevel.WARNING, className, message);
     }
 
+    /***
+     * Log a message with the ERROR log level
+     */
     public static void error(String className, String message) {
         log(LogLevel.ERROR, className, message);
     }
 
+    /***
+     * Log a message with the DEBUG log level
+     */
     public static void debug(String className, String message) {
         log(LogLevel.DEBUG, className, message);
     }
 }
+//EOF

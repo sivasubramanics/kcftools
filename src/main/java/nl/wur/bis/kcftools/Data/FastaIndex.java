@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /***
- * This class represents a FastaIndex object which is used to index a fasta file (somewhere similar to samtools faidx)
+ * This class represents a FastaIndex object which is used to index a fasta file (somewhat similar to samtools faidx)
  */
 public class FastaIndex implements AutoCloseable {
     private final Map<String, FastaIndexEntry> index;
@@ -33,7 +33,7 @@ public class FastaIndex implements AutoCloseable {
 
         // sort this.index by entry.seqId
         this.index = sortByValue(Collections.unmodifiableMap(loadIndex(indexFile)));
-        // Create an immutable list of sequence names in the same order as in the index
+        // create an immutable list of sequence names in the same order as in the index
         this.sequenceNames = Collections.unmodifiableList(new ArrayList<>(index.keySet()));
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(fastaFile, "r");
@@ -56,10 +56,10 @@ public class FastaIndex implements AutoCloseable {
                     sequenceEndOffset = fileSize;
                 }
 
-                // Offset length of the sequence
+                // offset length of the sequence
                 int sequenceOffsetLength = (int) (sequenceEndOffset - sequenceStartOffset);
 
-                // Memory-map for each sequence
+                // memory-map for each sequence
                 if (sequenceOffsetLength > 0) {
                     this.buffer[i] = fileChannel.map(FileChannel.MapMode.READ_ONLY, sequenceStartOffset, sequenceOffsetLength);
                 } else {
@@ -123,7 +123,7 @@ public class FastaIndex implements AutoCloseable {
             return null;
         }
 
-        // Validate start and end
+        // validate start and end
         if (start < 0 || end > entry.getLength() || start >= end) {
             Logger.error(CLASS_NAME, "Invalid range: " + start + "-" + end + " for sequence: " + name);
             return null;
@@ -276,7 +276,7 @@ public class FastaIndex implements AutoCloseable {
     }
 
     /***
-     * Sort the index Map by value
+     * Sort the index Map by value, here the value is FastaIndexEntry
      */
     public static Map<String, FastaIndexEntry> sortByValue(Map<String, FastaIndexEntry> map) {
         List<Map.Entry<String, FastaIndexEntry>> entryList = new ArrayList<>(map.entrySet());

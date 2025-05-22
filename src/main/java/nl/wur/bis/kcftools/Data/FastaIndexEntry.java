@@ -2,6 +2,10 @@ package nl.wur.bis.kcftools.Data;
 
 import org.jetbrains.annotations.NotNull;
 
+/***
+ * Class representing an entry in a FASTA index file.
+ * Contains information about the sequence name, offset, length, line bases, line width, and sequence ID.
+ */
 public class FastaIndexEntry implements Comparable<FastaIndexEntry> {
     private final String sequenceName;
     private final long offset;

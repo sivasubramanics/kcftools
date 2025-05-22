@@ -15,6 +15,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+/***
+ * Cohort class to create a cohort of samples kcf files.
+ * It takes a list of kcf files and merges them into a single kcf file.
+ * The output file is specified by the user.
+ */
 @Command(name = "cohort", description = "Create a cohort of samples kcf files")
 public class Cohort implements Callable<Integer>, Runnable {
     @Option(names = {"-o", "--output"}, description = "Output file name", required = true)
@@ -51,12 +56,18 @@ public class Cohort implements Callable<Integer>, Runnable {
         }
     }
 
+    /**
+     * Reads a list of kcf files from a file.
+     */
     private String[] readListFile(String listFile) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(listFile))) {
             return reader.lines().toArray(String[]::new);
         }
     }
 
+    /***
+     * Main function to cohort kcf files.
+     */
     private void cohortKcfFiles() {
         Map<String, Window> windows = new LinkedHashMap<>();
         KCFHeader header = null;
@@ -95,7 +106,7 @@ public class Cohort implements Callable<Integer>, Runnable {
             header.addCommandLine(HelperFunctions.getCommandLine());
             writer.writeHeader(header);
 
-            // Align samples in each window with the header
+            // align samples in each window with the header
             String[] headerSamples = header.getSamples();
             for (Window window : windows.values()) {
                 window.alignSamplesWithHeader(headerSamples);

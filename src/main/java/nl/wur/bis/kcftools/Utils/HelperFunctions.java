@@ -1,6 +1,5 @@
 package nl.wur.bis.kcftools.Utils;
 
-
 import picocli.CommandLine;
 
 import java.io.*;
@@ -12,33 +11,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
-
 /**
- * Utility Helper functions for Meganome
+ * Utility Helper functions for KCFTOOLS
  */
 public class HelperFunctions {
 
-    private static final String[] DEPENDENCIES = {"kmc"};
-
     private static final String CLASS_NAME = HelperFunctions.class.getSimpleName();
-
-    /**
-     * decompresses a gzip file
-     */
-    public static String decompressGZipFile(String inFile) throws IOException {
-        String fileName = inFile.replace(".gz", "");
-        FileInputStream fis = new FileInputStream(inFile);
-        GZIPInputStream gis = new GZIPInputStream(fis);
-        FileOutputStream fos = new FileOutputStream(fileName);
-        byte[] buffer = new byte[1024];
-        int len;
-        while((len = gis.read(buffer)) != -1){
-            fos.write(buffer, 0, len);
-        }
-        gis.close();
-        fos.close();
-        return fileName;
-    }
 
     /***
      * Execute a command and return the output
@@ -113,7 +91,6 @@ public class HelperFunctions {
             System.exit(1);
             return false;
         }
-
         return true;
     }
 
@@ -129,31 +106,6 @@ public class HelperFunctions {
      */
     public static boolean tryExec(String execString, String outputFile, String errorFile) {
         return tryExec(execString, outputFile, errorFile, null);
-    }
-
-    /***
-     * Execute a command and return the output
-     */
-    public static void checkExecutables(String[] executables) {
-        for (String executable : executables) {
-            if (!tryExec("which " + executable)) {
-                throw new RuntimeException("Executable " + executable + " not found in path");
-            }
-        }
-    }
-
-    /***
-     * Check the dependencies are installed for the meganome pipeline
-     */
-    public static void checkDependencies() {
-        try{
-            checkExecutables(DEPENDENCIES);
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-            System.out.println("All the dependencies are not installed. Please install them before running meganome. { "+ String.join(", ", DEPENDENCIES) + " }");
-            System.exit(1);
-        }
     }
 
     /***
@@ -211,7 +163,6 @@ public class HelperFunctions {
         };
     }
 
-
     /***
      * Check if a tool is installed
      */
@@ -229,10 +180,6 @@ public class HelperFunctions {
             Logger.error(CLASS_NAME, "Error checking if " + toolName + " is installed");
         }
         return false;
-    }
-
-    public static boolean isCompressed(String fileName){
-        return isCompressed(new File(fileName));
     }
 
     /***
@@ -269,37 +216,6 @@ public class HelperFunctions {
     public static void createDirectory(String inDir) { tryExec("mkdir -p " + inDir); }
 
     /***
-     * Delete a directory
-     * @param inDir: the directory to delete
-     */
-    public static void deleteDirectory(String inDir) {
-        if (inDir.equals("/")) {
-            throw new RuntimeException("Cannot delete root directory");
-        }
-        if (checkDirectoryExists(inDir)) {
-            tryExec("rm -rf " + inDir);
-        }
-    }
-
-    /***
-     * Get the base name of a file
-     */
-    public static String getBaseName(String inFile) {
-        return Path.of(inFile).getFileName().toString();
-    }
-
-    /***
-     * Based on the total and current number show the print the progress on STDOUT, self deleting the last line
-     */
-    public static void showProgress(int totalNum, int currentNum) {
-        String progress = String.format("%.2f", (currentNum * 100.0) / totalNum);
-        System.out.print("\r" + "Processed: " + progress + "%");
-        if (currentNum == totalNum) {
-            System.out.print("\r");
-        }
-    }
-
-    /***
      * This method is used to delete a file
      */
     public static void deleteFile(String inFile) {
@@ -308,27 +224,6 @@ public class HelperFunctions {
         } catch (IOException e) {
             Logger.error(CLASS_NAME, "Error deleting file: " + inFile);
         }
-    }
-
-
-    /***
-     * This method is used to check if a kmer contains non ACGT characters
-     */
-    public static boolean containsNonACGT(String kmer) {
-        char[] kmerChars = kmer.toCharArray();
-        return containsNonACGT(kmerChars);
-    }
-
-    /***
-     * This method is used to check if a kmer contains non ACGT characters
-     */
-    public static boolean containsNonACGT(char[] kmer) {
-        for (char base : kmer) {
-            if (base != 'A' && base != 'C' && base != 'G' && base != 'T') {
-                return true;
-            }
-        }
-        return false;
     }
 
     /***
@@ -352,53 +247,6 @@ public class HelperFunctions {
      */
     public static boolean isOlder(File fileOne, File fileTwo) {
         return fileOne.lastModified() < fileTwo.lastModified();
-    }
-
-    /***
-     * This method returns available RAM size based on the unity provided. If the unit is gb then return in gb, if mb then return in mb
-     */
-    public static String getMaxRAMSize(String unit) {
-        // maximum avaiable memory in bytes
-        long totalMemoryBytes = Runtime.getRuntime().maxMemory();
-        long availableMemoryBytes = Runtime.getRuntime().freeMemory();
-        double totalMemory;
-        double availableMemory;
-
-        if (unit == null) {
-            return String.format("%d:%d", totalMemoryBytes, availableMemoryBytes);
-        }
-
-        switch (unit.toUpperCase()) {
-            case "GB":
-                totalMemory = totalMemoryBytes / (1024.0 * 1024.0 * 1024.0);
-                availableMemory = availableMemoryBytes / (1024.0 * 1024.0 * 1024.0);
-                break;
-            case "MB":
-                totalMemory = totalMemoryBytes / (1024.0 * 1024.0);
-                availableMemory = availableMemoryBytes / (1024.0 * 1024.0);
-                break;
-            case "KB":
-                totalMemory = totalMemoryBytes / 1024.0;
-                availableMemory = availableMemoryBytes / 1024.0;
-                break;
-            default:
-                System.out.println("Invalid unit. Please use GB or MB. Returning in bytes.");
-                totalMemory = totalMemoryBytes;
-                availableMemory = availableMemoryBytes;
-        }
-        return String.format("%.2f:%.2f", totalMemory, availableMemory);
-    }
-
-    /***
-     * This method is used to check if a string is numeric
-     */
-    public static boolean isNumeric(String string) {
-        try {
-            Integer.parseInt(string);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
     }
 
     /***

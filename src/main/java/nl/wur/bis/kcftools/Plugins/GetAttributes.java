@@ -10,7 +10,7 @@ import java.io.BufferedWriter;
 import java.util.concurrent.Callable;
 
 /***
- * This is a command line plugin that may extract attribures from the KCF files and write them to a TSV file
+ * This is a command line plugin that may extract attributes from the KCF files and write them to a TSV file
  * Attributes are:
  * 1. Number of observed kmers
  * 2. Number of variations
@@ -51,6 +51,9 @@ public class GetAttributes implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Main method to extract attributes from KCF file
+     */
     private void getAttributes() {
         int[][] observedKmers;
         try (KCFReader reader = new KCFReader(kcfFile);
@@ -114,3 +117,4 @@ public class GetAttributes implements Callable<Integer>, Runnable {
         }
     }
 }
+//EOF

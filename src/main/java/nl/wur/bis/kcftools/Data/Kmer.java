@@ -5,6 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+/***
+ * This class represents a kmer.
+ * It is used to store the kmer in a long array and provides methods to manipulate and access the kmer.
+ */
 public class Kmer implements Comparable<Kmer> {
     private final int kmerLength;
     private final int prefixLength;
@@ -38,13 +42,7 @@ public class Kmer implements Comparable<Kmer> {
         this.suffixLength = this.kmerLength - prefixLength;
         this.isCanonical = isCanonical;
         this.kmerLong = kmerToLong(kmer);
-        if (isCanonical) {
-            // get the lowest of the kmer and its reverse complement
-            long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
-            if (compareLongArrays(this.kmerLong, revComp) > 0) {
-                this.kmerLong = revComp;
-            }
-        }
+        getCanonical();
     }
 
     public Kmer(long[] kmerLong, int kmerLength, int prefixLength, boolean isCanonical) {
@@ -53,13 +51,7 @@ public class Kmer implements Comparable<Kmer> {
         this.suffixLength = this.kmerLength - prefixLength;
         this.isCanonical = isCanonical;
         this.kmerLong = Arrays.copyOf(kmerLong, kmerLong.length);
-        if (isCanonical) {
-            // get the lowest of the kmer and its reverse complement
-            long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
-            if (compareLongArrays(this.kmerLong, revComp) > 0) {
-                this.kmerLong = revComp;
-            }
-        }
+        getCanonical();
     }
 
     public Kmer(Kmer kmer, boolean isCanonical) {
@@ -69,8 +61,16 @@ public class Kmer implements Comparable<Kmer> {
         this.suffixLength = kmer.getSuffixLength();
         this.isCanonical = isCanonical;
         this.kmerLong = Arrays.copyOf(kmer.kmerLong, kmer.kmerLong.length);
+        getCanonical();
+    }
+
+    /***
+     * This method is used to get the canonical kmer.
+     * It checks if the kmer is canonical and if not, it gets the reverse complement of the kmer and compares it with the original kmer.
+     * If the reverse complement is smaller, it replaces the original kmer with the reverse complement.
+     */
+    private void getCanonical() {
         if (isCanonical) {
-            // get the lowest of the kmer and its reverse complement
             long[] revComp = getReverseComplement(this.kmerLong, this.kmerLength);
             if (compareLongArrays(this.kmerLong, revComp) > 0) {
                 this.kmerLong = revComp;
@@ -90,6 +90,7 @@ public class Kmer implements Comparable<Kmer> {
         return this.suffixLength;
     }
 
+    // [DEBUG function]
     public String getSignatureString(Signature signature) {
         return longToKmer(this.getSignature(signature), signature.getSignLength());
     }
@@ -137,7 +138,7 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * extract suffix from the kmer long and convert that to a byte array.
+     * Extract suffix from the kmer long and convert that to a byte array.
      */
     private byte[] extractSuffix(long[] kmerLong, int kmerLength, int prefixLength) {
         int suffixLength = kmerLength - prefixLength;
@@ -156,7 +157,7 @@ public class Kmer implements Comparable<Kmer> {
             if (bitOffset <= 62) {
                 baseBits = (int) ((kmerLong[wordIndex] >> (62 - bitOffset)) & 0x3);
             } else {
-                // Bits are split between two longs
+                // bits are split between two longs
                 int highBits = (int) ((kmerLong[wordIndex] & 1L) << 1);
                 int lowBits = (int) ((kmerLong[wordIndex + 1] >> 63) & 1L);
                 baseBits = highBits | lowBits;
@@ -169,8 +170,7 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * extract the prefix from the kmer long and return that as an integer. [miscellaneous]
-     * @return
+     * Extract the prefix from the kmer long and return that as an integer. [miscellaneous]
      */
     public int getPrefixRev() {
         if (prefixRev == null) {
@@ -181,8 +181,7 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * extract the suffix from the kmer long and return that as a byte array. [miscellaneous]
-     * @return
+     * Extract the suffix from the kmer long and return that as a byte array. [miscellaneous]
      */
     public byte[] getSuffixRev() {
         if (suffixRev == null) {
@@ -193,8 +192,7 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * get the reverse complement of the kmer long and return that as a string. [miscellaneous]
-     * @return
+     * Get the reverse complement of the kmer long and return that as a string. [miscellaneous]
      */
     public String getReverseComplementKmer() {
         if (reverseComplementKmer == null) {
@@ -204,11 +202,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * extract the integer value from the kmer long. used in the getSignature method to extract the best signature from the long kmer
-     * @param bitArray
-     * @param startBase
-     * @param lengthBases
-     * @return
+     * Extract the integer value from the kmer long.
+     * used in the getSignature method to extract the best signature from the long kmer
      */
     private int extractIntFromBits(long[] bitArray, int startBase, int lengthBases) {
         int result = 0;
@@ -231,9 +226,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * convert the kmer to a long array. used in the constructor to convert the kmer char array to a long array.
-     * @param kmer
-     * @return
+     * convert the kmer to a long array.
+     * used in the constructor to convert the kmer char array to a long array.
      */
     public static long[] kmerToLong(char[] kmer) {
         int totalBits = kmer.length * 2;
@@ -258,10 +252,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * convert the kmer long array to a byte array. used in the getSuffixFwd and getSuffixRev methods to convert the kmer long array to a byte array.
-     * @param kmerLong
-     * @param kmerLength
-     * @return
+     * convert the kmer long array to a byte array.
+     * used in the getSuffixFwd and getSuffixRev methods to convert the kmer long array to a byte array.
      */
     public static byte[] kmerToBytes(long[] kmerLong, int kmerLength) {
         byte[] bases = new byte[kmerLength];
@@ -288,9 +280,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * convert the base to bits. used in the kmerToLong method to convert the kmer char array to a long array.
-     * @param base
-     * @return
+     * convert the base to bits.
+     * used in the kmerToLong method to convert the kmer char array to a long array.
      */
     private static int baseToBits(char base) {
         return switch (base) {
@@ -303,10 +294,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * get the reverse complement of the kmer long array. used in the constructor to get the reverse complement of the kmer long array.
-     * @param binaryKmer
-     * @param kmerLength
-     * @return
+     * get the reverse complement of the kmer long array.
+     * used in the constructor to get the reverse complement of the kmer long array.
      */
     public static long[] getReverseComplement(long[] binaryKmer, int kmerLength) {
         int totalBits = kmerLength * 2;
@@ -349,20 +338,16 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * convert the kmer long array to a string. used in the toString method to convert the kmer long array to a string.
-     * @param binaryKmer
-     * @param kmerLength
-     * @return
+     * convert the kmer long array to a string.
+     * used in the toString method to convert the kmer long array to a string.
      */
     public static String longToKmer(long binaryKmer, int kmerLength) {
         return longToKmer(new long[]{binaryKmer}, kmerLength);
     }
 
     /***
-     * convert the kmer long array to a string. used in the toString method to convert the kmer long array to a string.
-     * @param binaryKmer
-     * @param kmerLength
-     * @return
+     * convert the kmer long array to a string.
+     * used in the toString method to convert the kmer long array to a string.
      */
     public static String longToKmer(long[] binaryKmer, int kmerLength) {
         char[] kmer = new char[kmerLength];
@@ -401,9 +386,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * convert the bits to base. used in the longToKmer method to convert the kmer long array to a string.
-     * @param twoBits
-     * @return
+     * convert the bits to base.
+     * used in the longToKmer method to convert the kmer long array to a string.
      */
     private static char bitsToBase(int twoBits) {
         return switch (twoBits) {
@@ -416,10 +400,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * compare two long arrays. used in the compareTo method to compare two kmer long arrays.
-     * @param a
-     * @param b
-     * @return
+     * compare two long arrays.
+     * used in the compareTo method to compare two kmer long arrays.
      */
     private static int compareLongArrays(long[] a, long[] b) {
         int len = Math.min(a.length, b.length);
@@ -456,8 +438,8 @@ public class Kmer implements Comparable<Kmer> {
     }
 
     /***
-     * get the prefix forward as a string. used in the toString method to convert the kmer long array to a string. [miscellaneous]
-     * @return
+     * get the prefix forward as a string.
+     * used in the toString method to convert the kmer long array to a string. [miscellaneous]
      */
     public String getPrefixFwdStr() {
         return longToKmer(getPrefixFwd(), this.prefixLength);
@@ -466,8 +448,6 @@ public class Kmer implements Comparable<Kmer> {
     /***
      * TODO: this could improve performance
      * get the suffix forward as a string. used in the toString method to convert the kmer long array to a string. [miscellaneous]
-     * @param base
-     * @return
      */
     public Kmer insertBase(char base) {
         if (this.isCanonical) {
@@ -496,6 +476,5 @@ public class Kmer implements Comparable<Kmer> {
 
         return new Kmer(newKmerLong, this.kmerLength, this.prefixLength, this.isCanonical);
     }
-
 }
 //EOF

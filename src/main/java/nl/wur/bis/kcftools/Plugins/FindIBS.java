@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+/***
+ * Find IBS windows in a KCF file
+ */
 @Command(name = "findIBS", description = "Find IBS windows in a KCF file")
 public class FindIBS implements Callable<Integer>, Runnable {
     // in KCF file name
@@ -63,6 +66,9 @@ public class FindIBS implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Main function to find IBS windows in a KCF file
+     */
     private void findIBS() throws Exception {
 
         // if outFile doesnt end with .kcf, add it
@@ -164,7 +170,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
         if (writeSummary) {
             try (BufferedWriter summaryWriter = new BufferedWriter(new FileWriter(outFile.replace(".kcf", ".summary.tsv")))) {
-                // Write header for the summary file
+                // write header for the summary file
                 summaryWriter.write("Block\tSample\tChromosome\tStart\tEnd\tLength\tTotalBlocks\tIBSBlocks\tIBSProportion\tMeanScore\n");
 
                 for (String sample : samples) {
@@ -192,12 +198,12 @@ public class FindIBS implements Callable<Integer>, Runnable {
                         }
                     }
 
-                    // Write BED file if required
+                    // write BED file if required
                     if (writeBed) {
                         writeBedFile(outFile, sample, blocks);
                     }
 
-                    // Write summary for each block
+                    // write summary for each block
                     for (Map.Entry<Integer, List<Window>> entry : blocks.entrySet()) {
                         writeSummaryEntry(summaryWriter, entry, sample);
                     }
@@ -206,6 +212,9 @@ public class FindIBS implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Write the BED file for the IBS blocks
+     */
     private void writeBedFile(String outFile, String sample, Map<Integer, List<Window>> blocks) throws IOException {
         try (BufferedWriter bedWriter = new BufferedWriter(new FileWriter(outFile.replace(".kcf", "." + sample + ".bed")))) {
             for (List<Window> block : blocks.values()) {
@@ -218,6 +227,9 @@ public class FindIBS implements Callable<Integer>, Runnable {
         }
     }
 
+    /***
+     * Write the summary entry for each block
+     */
     private void writeSummaryEntry(BufferedWriter summaryWriter, Map.Entry<Integer, List<Window>> entry, String sample) throws IOException {
         List<Window> block = entry.getValue();
         if (block.isEmpty()) return;
@@ -255,3 +267,4 @@ public class FindIBS implements Callable<Integer>, Runnable {
         ));
     }
 }
+//EOF

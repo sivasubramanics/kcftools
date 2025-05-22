@@ -16,7 +16,8 @@ import java.util.Arrays;
 import static nl.wur.bis.kcftools.Data.Kmer.binaryToKmer;
 
 /***
- * This class represents a KMC object which is used to read a KMC database and query the database for kmer counts
+ * This class represents a KMC object that is used to read a KMC database and query the database for kmer counts
+ * This class is heavily based on the documentation here: https://github.com/refresh-bio/KMC/blob/master/API.pdf
  */
 public class KMC implements AutoCloseable {
     private final String kmcPrefixFile;
@@ -88,7 +89,6 @@ public class KMC implements AutoCloseable {
         int numberOfPages = (int) ((totalKmers * record_size) / fullPageSize + ((totalKmers * record_size) % fullPageSize == 0 ? 0 : 1));
 
         inMemorySuffixBuffers = new byte[numberOfPages][];
-
         try (RandomAccessFile sufFile = new RandomAccessFile(kmcSuffixFile, "r")) {
             // first 4 bytes are the marker KMCS in the file
             sufFile.seek(4);
@@ -100,8 +100,6 @@ public class KMC implements AutoCloseable {
             }
         }
     }
-
-
 
     /***
      * Read the KMC prefix file
@@ -153,7 +151,6 @@ public class KMC implements AutoCloseable {
             }
 
             long prefixArrayStart = 4;
-//            singleLUTSize = (1L << (2 * lutPrefixLength)) * 8L;
             lutPrefixArraySize = (1 << (2 * lutPrefixLength));
             singleLUTSize = lutPrefixArraySize * 8L;
             int numPrefixArrays = (int) ((signatureMapStart - 8 - 4) / (int) singleLUTSize);
@@ -174,7 +171,6 @@ public class KMC implements AutoCloseable {
      * Read the suffix buffers from the kmc_suf file
      */
     private void readSuffixBuffers(String kmcSuffixFile){
-//        int record_size = counterSize + sufixLength / 4;
         int full_page_size = MAX_BYTE_COUNT / record_size * record_size; // in bytes
         int number_of_pages = (int) ((totalKmers * record_size) / full_page_size + ((totalKmers * record_size) % full_page_size == 0 ? 0 : 1));
         Logger.info(CLASS_NAME, "MemoryMapping KMC suffix file " + kmcSuffixFile);
@@ -193,7 +189,7 @@ public class KMC implements AutoCloseable {
     }
 
     /***
-     * Dump the prefix array to a file
+     * Dump the prefix array to a file [DEBUG function]
      */
     public void dumpPrefixArray(String prefixArrayFile) throws IOException {
         int columnSize = 1 << (2 * lutPrefixLength);
@@ -213,7 +209,7 @@ public class KMC implements AutoCloseable {
     }
 
     /***
-     * Dump the suffix buffers to a file
+     * Dump the suffix buffers to a file [DEBUG function]
      */
     public void dumpSuffixBuffers(String suffixBufferFile) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(suffixBufferFile))) {
@@ -246,7 +242,7 @@ public class KMC implements AutoCloseable {
     }
 
     /***
-     * Dump the signature map to a file
+     * Dump the signature map to a file [DEBUG function]
      */
     public void dumpSignatureMap(String signatureMapFile) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(signatureMapFile))) {
@@ -424,7 +420,7 @@ public class KMC implements AutoCloseable {
     }
 
     /***
-     * dump the kmer table to a file (handle with care as this could create huge file)
+     * dump the kmer table to a file (handle with care as this could create huge file) [DEBUG function]
      * @param kmerTableFile
      * @throws IOException
      */
