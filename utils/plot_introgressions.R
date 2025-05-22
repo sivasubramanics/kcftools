@@ -87,7 +87,8 @@ p <- ggplot() +
     aes(xmin = Start, xmax = End, ymin = SamplePosition - bandwidth, ymax = SamplePosition + bandwidth, fill = MeanScore),
     color = NA
   ) +
-  scale_fill_gradient(low = "yellow", high = "red", name = "Mean Score", limits = c(0, 100), oob = scales::squish) +
+  # scale_fill_gradient(low = "yellow", high = "#3b3b3b", name = "Mean Score", limits = c(0, 100), oob = scales::squish) +
+  scale_fill_gradient(low = "yellow", high = "darkred", name = "Mean Score", limits = c(0, 100), oob = scales::squish) +
   scale_y_continuous(
     breaks = 1:length(samples),
     labels = samples,
@@ -126,7 +127,7 @@ ggsave(
   plot = p,
   width = plot_width,
   height = plot_height,
-  dpi = if (ext == "png") 600 else NA,
+  dpi = if (ext == "png") 300 else NA,
   device = if (ext %in% c("pdf", "svg", "png")) ext else stop("Unsupported format"),
   limitsize = FALSE
 )
