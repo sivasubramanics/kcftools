@@ -118,7 +118,7 @@ conda install -c bioconda kcftools
 KCFTOOLS provides several subcommands. General usage:
 
 ```bash
-java -jar kcftools-<version>.jar <command> [options]
+kcftools <command> [options]
 ```
 
 ---
@@ -126,7 +126,7 @@ java -jar kcftools-<version>.jar <command> [options]
 Detect and count variations by comparing reference k-mers with a query KMC database.
 
 ```bash
-java -jar kcftools.jar getVariations [options]
+kcftools getVariations [options]
 ```
 
 **Required Options:**
@@ -150,7 +150,7 @@ java -jar kcftools.jar getVariations [options]
 Combine multiple `.kcf` files into a single cohort for population-level analysis.
 
 ```bash
-java -jar kcftools.jar cohort [options]
+kcftools cohort [options]
 ```
 
 **Options:**
@@ -165,7 +165,7 @@ java -jar kcftools.jar cohort [options]
 Identify Identity-by-State (IBS) or variable regions in a sample.
 
 ```bash
-java -jar kcftools.jar findIBS [options]
+kcftools findIBS [options]
 ```
 
 **Options:**
@@ -185,7 +185,7 @@ java -jar kcftools.jar findIBS [options]
 Split a KCF file by chromosome.
 
 ```bash
-java -jar kcftools.jar splitKCF [options]
+kcftools splitKCF [options]
 ```
 
 **Options:**
@@ -199,7 +199,7 @@ java -jar kcftools.jar splitKCF [options]
 Extract and summarize metadata and attributes from a KCF file.
 
 ```bash
-java -jar kcftools.jar getAttributes [options]
+kcftools getAttributes [options]
 ```
 
 **Options:**
@@ -213,7 +213,7 @@ java -jar kcftools.jar getAttributes [options]
 Generate a genotype matrix from a `.kcf` file, suitable for GWAS or population studies.
 
 ```bash
-java -jar kcftools.jar genotypeMatrix [options]
+kcftools genotypeMatrix [options]
 ```
 
 **Options:**
