@@ -3,21 +3,27 @@
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/kcftools.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/kcftools)
 [![Release](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml/badge.svg)](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml)
 [![Version](https://img.shields.io/badge/version-0.0.1-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
-[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3.0 only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](https://www.gnu.org/licenses/gpl-3.0.html)
 <!--- badges: end --->
 
-# KCFTOOLS
+# _KCFTOOLS_
 
-**KCFTOOLS** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed k-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
+**_KCFTOOLS_** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed k-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
+
+---
+### Quick Start
+
+To quickly get started with `kcftools`, refer to the [`run_kcftools.sh`](https://github.com/sivasubramanics/kcftools/blob/v0.0.1/utils/run_kcftools.sh) script located in the `utils` directory. Assuming that you have installed `kcftools` via Bioconda.
 
 ---
 
 ## Contents
-- [Introduction](#introduction)
+- [Introduction](#inon)
 - [Methodology](#methodology)
+- [Workflow](#workflow)
 - [Features](#features)
 - [Installation](#installation)
-- [Limitation and Performance Notes](#-limitation-and-performance-notes)
+- [Limitations and Performance Notes](#-limitations-and-performance-notes)
 - [Usage](#usage)
    - [getVariations](#getvariations)
    - [cohort](#cohort)
@@ -25,6 +31,9 @@
    - [splitKCF](#splitkcf)
    - [getAttributes](#getattributes)
    - [kcfToMatrix](#kcftomatrix)
+- [KCF File Format](#kcf-file-format)
+  - [KCF Header format](#kcf-file-header-description)
+  - [KCF Data format](#kcf-file-data-column-description)
 - [LICENSE](#license)
 - [Contact](#contact)
 
@@ -32,12 +41,12 @@
 
 ## Introduction
 
-KCFTOOLS is designed for high-throughput genomic analysis using efficient k-mer based methods. By leveraging fast k-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
+_KCFTOOLS_ is designed for high-throughput genomic analysis using efficient k-mer based methods. By leveraging fast k-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
 
 
 ## Methodology
 
-KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calulcated using the below formula,
+_KCFTOOLS_ (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calculated using the below formula,
 
 $$
 \text{Identity Score} = W_o \cdot \left( \frac{\text{obs k-mers}}{\text{total k-mers}} \right) + W_i \cdot \left( 1 - \frac{\text{inner dist}}{\text{eff length}} \right) + W_t \cdot \left( 1 - \frac{\text{tail dist}}{\text{eff length}} \right) \cdot 100
@@ -74,12 +83,13 @@ _Figure: Overview of the `kcftools getVariations` methodology._
 ![KCFTOOLS Workflow](images/kcftools_workflow.png)
 _Figure: Overview of the `kcftools` workflow_
 
+---
 
 ## Installation
 
 You can install **kcftools** using either **Bioconda** or from source.
 
-### 1. Using Bioconda (recommended) [currently under dev]
+### 1. Using Bioconda (recommended)
 
 If you have Bioconda set up, simply run:
 
@@ -123,7 +133,7 @@ conda install -c bioconda kcftools
 
 ---
 
-## ⚠️ Limitation and Performance Notes
+## ⚠️ Limitations and Performance Notes
 
 1. **KMC DB Compatibility**:
     - `getVariations` plugin works only with KMC databases produced by `kmc` version 3.0.0 or higher. 
@@ -142,7 +152,7 @@ conda install -c bioconda kcftools
 
 ## Usage
 
-KCFTOOLS provides several subcommands. General usage:
+`kcftools` provides several subcommands. General usage:
 
 ```bash
 kcftools <command> [options]
@@ -307,7 +317,7 @@ Reference genome FASTA file used to derive the reference k-mers.
 ```
 ##contig=<ID=chr3,length=324658466>
 ```
-Describes the reference contig (chromosome ID and its length).
+Specifies the reference contig (chromosome ID and its length).
 
 ```
 ##INFO=<ID=IS,Type=Float,Description="Minimum score for the window">
@@ -326,6 +336,9 @@ These define window-level summary statistics for identity score (IS, XS, MS), ob
 ##FORMAT=<ID=IB,Type=Integer,Description="IBS number">
 ##FORMAT=<ID=VA,Type=Integer,Description="Variations">
 ##FORMAT=<ID=OB,Type=Integer,Description="Observed kmers">
+##FORMAT=<ID=ID,Type=Integer,Description="Inner distance">
+##FORMAT=<ID=LD,Type=Integer,Description="Left tail distance">
+##FORMAT=<ID=RD,Type=Integer,Description="Right tail distance">
 ##FORMAT=<ID=SC,Type=Float,Description="Score">
 ```
 Define per-sample fields: identity-by-state (IB), number of variations (VA), number of observed k-mers (OB), and calculated score (SC).
@@ -347,63 +360,28 @@ The command-line(s) invocation used to produce the `.kcf` file for reproducibili
 
 Each row in the KCF file represents a non-overlapping genomic window analyzed for k-mer presence/absence variation. Below are the descriptions for each column:
 
-```
-#CHROM
-```
-Reference chromosome or contig name.
+| Column       | Description                                                                 |
+|--------------|-----------------------------------------------------------------------------|
+| `CHROM`      | Reference chromosome or contig name.                                        |
+| `START`      | Start position (0-based) of the window.                                     |
+| `END`        | End position (0-based, exclusive) of the window.                            |
+| `TOTAL_KMERS`| Number of reference k-mers in this window.                                  |
+| `INFO`       | Semicolon-separated summary stats (IS, XS, MS, IO, XO, MO, IV, XV, MV).     |
+| `FORMAT`     | Order of sample fields (GT, VA, OB, ID, LD, RD, SC).                        |
+| `<Sample>`   | Sample-specific data, colon-separated based on FORMAT.                      |
 
-```
-START
-```
-Start position (0-based) of the window on the reference genome.
-
-```
-END
-```
-End position (0-based, exclusive) of the window on the reference genome.
-
-```
-TOTAL_KMERS
-```
-Total number of k-mers generated from the reference for this window.
-
-```
-INFO
-```
-Semicolon-separated window-level summary statistics:
-- `IS`: Minimum Identity Score
-- `XS`: Maximum Identity Score
-- `MS`: Mean Identity Score
-- `IO`: Minimum observed k-mers in this window
-- `XO`: Maximum observed k-mers
-- `MO`: Mean observed k-mers
-- `IV`: Minimum number of variations
-- `XV`: Maximum variations
-- `MV`: Mean number of variations
-
-```
-FORMAT
-```
-Defines the order of data fields in the sample column(s). Typically includes:
-- `GT`: Genotype or status field (placeholder), '`N`' == not IBS to the reference.
-- `VA`: Number of variations in this window
-- `OB`: Observed number of matching k-mers
-- `ID`: Inner k-mer distance
-- `LD`: Left tail k-mer distance
-- `RD`: Right tail k-mer distance
-- `SC`: Computed identity score for the window
-
-```
-<Sample>
-```
-One or more columns for each sample, following the `FORMAT` specification. Example:
-```
-N:3:914:24:19:0:96.97
-```
-Means: isIBS `N`, 3 variations, 914 observed k-mers, 24 inner distance, 19 left tail distance, 0 right tail distance, and an identity score of 96.97.
+#### Format Field Attributes
+| Field        | Description                                                 |
+|--------------|-------------------------------------------------------------|
+| `IB`         | Identity-by-state number (IBS) for the window.              |
+| `VA`         | Number of variations detected in the window.                |
+| `OB`         | Number of observed k-mers in the window.                    |
+| `ID`         | Inner distance (gaps between k-mer hits within the window). |
+| `LD`         | Left tail distance (gaps at the start of the window).       |
+| `RD`         | Right tail distance (gaps at the end of the window).        |
+| `SC`         | Identity score for the window.                              |
 
 ---
-
 
 ## Notes
 
