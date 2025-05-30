@@ -14,6 +14,7 @@
 
 ## Contents
 - [Introduction](#introduction)
+- [Methodology](#methodology)
 - [Features](#features)
 - [Installation](#installation)
 - [Limitation and Performance Notes](#-limitation-and-performance-notes)
@@ -33,6 +34,25 @@
 
 KCFTOOLS is designed for high-throughput genomic analysis using efficient k-mer based methods. By leveraging fast k-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
 
+
+## Methodology
+
+KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows—either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calulcated using the below formula,
+
+$$
+\text{Identity Score} = W_o \cdot \left( \frac{\text{obs k-mers}}{\text{total k-mers}} \right) + W_i \cdot \left( 1 - \frac{\text{inner dist}}{\text{eff length}} \right) + W_t \cdot \left( 1 - \frac{\text{tail dist}}{\text{eff length}} \right) \cdot 100
+$$
+
+where:
+- $W_o$ , $W_i$ , $W_t$ are weights assigned to the k-mer ratio, inner distance, and tail distance respectively.
+- **obs k-mers**: Number of k-mers from the reference window found in the query k-mer table.
+- **total k-mers**: Total number of k-mers from the reference window.
+- **inner dist**: Cumulative number of bases not covered by k-mers between hits within the window.
+- **tail dist**: Uncovered base positions at the start and end of the window (flanking gaps).
+- **eff length**: Effective length of the window (in base pairs), length of the reference window that is covered by total_kmers.
+
+![KCFTOOLS Methodology](images/kcftools_methodology.png)
+*Figure: Overview of the `kcftools getVariations` methodology.*
 ---
 
 ## Features
