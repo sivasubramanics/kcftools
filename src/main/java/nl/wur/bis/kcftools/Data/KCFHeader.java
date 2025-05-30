@@ -109,6 +109,17 @@ public class KCFHeader implements Comparable<KCFHeader> {
     }
 
     /***
+     * Get contigs ID (just an integer index) for the contig name
+     */
+    public int getContigID(String contigName){
+        if (contigs == null || !contigs.containsKey(contigName)){
+            Logger.error(CLASSNAME, "Contig " + contigName + " not found in the KCF header");
+            return -1;
+        }
+        return new ArrayList<>(contigs.keySet()).indexOf(contigName);
+    }
+
+    /***
      * Get a set of Param Key-Value pairs
      */
     private Pair getParam(String line) {

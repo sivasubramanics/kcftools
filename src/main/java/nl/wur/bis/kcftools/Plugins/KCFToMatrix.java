@@ -7,9 +7,8 @@ import nl.wur.bis.kcftools.Utils.HelperFunctions;
 import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /***
@@ -24,14 +23,23 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
     @Option(names = {"-o", "--output"}, description = "Output file prefix", required = true)
     private String outPrefix;
 
-    @Option(names = {"-a", "--score_a"}, description = "lower score cut-off for reference allelse", required = false)
-    private double scoreA = 95.0000;
+    @Option(names = {"-a", "--score_a"}, description = "Lower score cut-off for reference allele", required = false)
+    private double scoreA = 95.0;
 
-    @Option(names = {"-b", "--score_b"}, description = "lower score cut-off for alternate allele", required = false)
-    private double scoreB = 60.0000;
+    @Option(names = {"-b", "--score_b"}, description = "Lower score cut-off for alternate allele", required = false)
+    private double scoreB = 60.0;
 
     @Option(names = {"-r", "--rdata"}, description = "Convert the matrix to RData", required = false)
     private boolean rdata = false;
+
+    @Option(names = {"--maf"}, description = "minimum allele frequency to consider a window valid", required = false)
+    private double minMAF = 0.05;
+
+    @Option(names = {"--max-missing"}, description = "maximum proportion of missing data to consider a window valid", required = false)
+    private double maxMissing = 0.8;
+
+    @Option(names = {"--chrs"}, description = "List file with chromosomes to include", required = false)
+    private String chrsFile = null;
 
     private final String CLASSNAME = this.getClass().getSimpleName();
 
@@ -63,89 +71,155 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
      */
     private void convertKCFToMatrix() {
         try (KCFReader reader = new KCFReader(inFile);
-             BufferedWriter writer = new BufferedWriter(new java.io.FileWriter(outPrefix + ".matrix.tsv"));
-             BufferedWriter mapWriter = new BufferedWriter(new java.io.FileWriter(outPrefix + ".map.tsv"))) {
+             BufferedWriter writer = new BufferedWriter(new FileWriter(outPrefix + ".matrix.tsv"));
+             BufferedWriter mapWriter = new BufferedWriter(new FileWriter(outPrefix + ".map.tsv"));
+             BufferedWriter contigsMapWriter = new BufferedWriter(new FileWriter(outPrefix + ".contigsMap.tsv"))) {
+
             KCFHeader header = reader.getHeader();
-            int[][] matrix = new int[header.getSamples().length][header.getWindowCount()];
+            int sampleCount = header.getSamples().length;
+            int windowCount = header.getWindowCount();
+            int[][] matrix = new int[sampleCount][windowCount];
+            String[] map = new String[windowCount];
+            List<String> contigsMap = new LinkedList<>();
+            Set<Integer> badWindows = new HashSet<>();
             String[] samples = header.getSamples();
+            int contigID;
             int i = 0;
-            mapWriter.write("Name\tChromosome\tPosition");
-            mapWriter.newLine();
+            Set<String> chrs = null;
+
+            if (chrsFile != null) {
+                try (BufferedReader br = new BufferedReader(new FileReader(chrsFile))) {
+                    chrs = new HashSet<>();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        if (line.startsWith("#") || line.trim().isEmpty()) {
+                            continue; // skip comments and empty lines
+                        }
+                        chrs.add(line.trim());
+                    }
+                }
+            }
+
             for (Window window : reader) {
-                mapWriter.write(window.getSequenceName() + "\t" + window.getStart() + "\t" + window.getEnd());
-                mapWriter.newLine();
-                for (int j = 0; j < samples.length; j++) {
-                    // if score is between scoreCutOff and 100, then set the ibs to 0
-                    if (window.getData().get(samples[j]).getScore() >= scoreA) {
+                contigID = header.getContigID(window.getSequenceName()) + 1;
+                map[i] = i + "\t" + contigID + "\t" + window.getStart();
+                if (!contigsMap.contains(window.getSequenceName() + "\t" + contigID)) {
+                    contigsMap.add(window.getSequenceName() + "\t" + contigID);
+                }
+                int[] alleles = new int[sampleCount];
+                for (int j = 0; j < sampleCount; j++) {
+                    double score = window.getData().get(samples[j]).getScore();
+                    if (score >= scoreA) {
                         matrix[j][i] = 0;
-                    }
-                    // if score is between 60 and scoreCutOff, then set the ibs to 2
-                    else if (window.getData().get(samples[j]).getScore() >= scoreB && window.getData().get(samples[j]).getScore() < scoreA) {
+                        alleles[j] = 0;
+                    } else if (score >= scoreB) {
                         matrix[j][i] = 2;
-                    }
-                    // if score is between 0 and 60, then set the ibs to 1
-                    else if (window.getData().get(samples[j]).getScore() == 0) {
-                        matrix[j][i] = 'N';
-                    }
-                    else {
+                        alleles[j] = 2;
+                    } else if (score == 0) {
+                        matrix[j][i] = -1;
+                        alleles[j] = -1; // missing data
+                    } else {
                         matrix[j][i] = 1;
+                        alleles[j] = 1;
                     }
+                }
+                if (chrs != null && !chrs.contains(window.getSequenceName())) {
+                    badWindows.add(i);
+                    continue; // skip this window if not in the specified chromosomes
+                }
+                if (badWindow(alleles)) {
+                    badWindows.add(i);
                 }
                 i++;
             }
+
+            // Write the map file
+            mapWriter.write("name\tchromosome\tposition");
+            mapWriter.newLine();
+            for (int m = 0; m < i; m++) {
+                if (map[m] != null && !badWindows.contains(m)) {
+                    mapWriter.write(map[m]);
+                    mapWriter.newLine();
+                }
+            }
             mapWriter.flush();
             Logger.info(CLASSNAME, "Generated Map file: " + outPrefix + ".map.tsv");
-            // write the matrix
-            writer.write("sample");
-            for (int k = 0; k < header.getWindowCount(); k++) {
-                writer.write("\t" + k);
+
+
+            // Write the contigs map file
+            for (String contig : contigsMap) {
+                contigsMapWriter.write(contig);
+                contigsMapWriter.newLine();
+            }
+            contigsMapWriter.flush();
+            Logger.info(CLASSNAME, "Generated Contigs Map file: " + outPrefix + ".contigsMap.tsv");
+
+            // Write the matrix file
+            writer.write("taxa");
+            for (int k = 0; k < i; k++) {
+                if (!badWindows.contains(k)) {
+                    writer.write("\t" + k);
+                }
             }
             writer.newLine();
-            for (int j = 0; j < samples.length; j++) {
+            for (int j = 0; j < sampleCount; j++) {
                 writer.write(samples[j]);
-                for (int k = 0; k < header.getWindowCount(); k++) {
-                    writer.write("\t" + matrix[j][k]);
+                for (int k = 0; k < i; k++) {
+                    if (!badWindows.contains(k)) {
+                        writer.write("\t" + (matrix[j][k] == -1 ? 1 : matrix[j][k]));
+                    }
                 }
                 writer.newLine();
             }
-            // close the writers
             writer.flush();
             Logger.info(CLASSNAME, "Generated Matrix file: " + outPrefix + ".matrix.tsv");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         if (rdata) {
             convertGTmatrixToRdata(outPrefix + ".matrix.tsv", outPrefix + ".map.tsv");
         }
     }
 
-    /***
-     * Convert the matrix to RData
-     */
+    private boolean badWindow(int[] alleles) {
+        int count0 = 0, count1 = 0, count2 = 0, countN = 0;
+        for (int allele : alleles) {
+            if (allele == 0) count0++;
+            else if (allele == 1) count1++;
+            else if (allele == 2) count2++;
+            else if (allele == -1) countN++;
+        }
+
+        int validCount = alleles.length - countN;
+        return (count0 == alleles.length || count1 == alleles.length || count2 == alleles.length || countN == alleles.length)
+                || (validCount > 0 && (count0 <= minMAF * validCount || count2 <= minMAF * validCount))
+                || (countN >= maxMissing * alleles.length || (countN + count1) >= maxMissing * alleles.length);
+    }
+
     private void convertGTmatrixToRdata(String matrixFile, String mapFile) {
-        // check for Rscript is installed
         if (!HelperFunctions.isInstalled("Rscript")) {
             Logger.error(CLASSNAME, "Rscript is not installed. Please install Rscript and try again.");
+            return;
         }
         Logger.info(CLASSNAME, "Converting matrix to RData");
-        // create random name for R script based on the current time point
+
         String rscriptName = "convertGTmatrixToRdata_" + System.currentTimeMillis() + ".R";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(rscriptName))) {
-            writer.write("myGD <- read.table(\"" + matrixFile + "\", header = TRUE, sep = \"\\t\")\n");
-            writer.write("save(myGD, file = \"" + matrixFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
-            writer.write("myGM <- read.table(\"" + mapFile + "\", header = FALSE, sep = \"\\t\")\n");
-            writer.write("save(myGM, file = \"" + mapFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
+            writer.write("df <- read.table(\"" + matrixFile + "\", head = TRUE, sep = \"\\t\")\n");
+            writer.write("save(df, file = \"" + matrixFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
+            writer.write("df <- read.table(\"" + mapFile + "\", head = TRUE, sep = \"\\t\")\n");
+            writer.write("save(df, file = \"" + mapFile.replaceAll("\\.tsv$", ".RData") + "\")\n");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // run the R script
+
         try {
             Logger.info(CLASSNAME, "Running Rscript: " + rscriptName);
             HelperFunctions.tryExec("Rscript " + rscriptName);
-            // delete the R script
             HelperFunctions.deleteFile(rscriptName);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Logger.error(CLASSNAME, "Error while running Rscript: " + e.getMessage());
         }
     }

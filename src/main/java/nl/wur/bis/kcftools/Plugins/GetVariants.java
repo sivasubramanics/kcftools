@@ -54,6 +54,9 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // if its RNA-seq data, get gtf file and feature type (gene, mRNA, CDS)
     @Option(names = {"-g", "--gtf"}, description = "GTF file name", required = false)
     private String gtfFile;
+    // minimum kmer count to consider a kmer as valid
+    @Option(names = {"-c", "--min-k-count"}, description = "Minimum kmer count to consider [1]", required = false)
+    private int minKmerCount = 1;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
     private FastaIndex index;
@@ -120,18 +123,19 @@ public class GetVariants implements Callable<Integer>, Runnable {
         AtomicInteger completedWindows = new AtomicInteger(0);
 
         ExecutorService executor = Executors.newFixedThreadPool(nThreads);
-        for (String name : windowsMap.keySet()) {
-            Queue<Window> windows = windowsMap.get(name);
-            List<Window> processed = new ArrayList<>(windows.size());
+        ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(executor);
 
-            ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(executor);
+        for (Map.Entry<String, Queue<Window>> entry : windowsMap.entrySet()) {
+            String name = entry.getKey();
+            Queue<Window> windows = entry.getValue();
+            List<Window> processed = Collections.synchronizedList(new ArrayList<>(windows.size()));
+            processedWindows.put(name, processed);
+
             for (Window window : windows) {
                 completionService.submit(() -> {
                     Fasta fasta = getFasta(window);
                     Window processedWindow = processWindow(window, fasta, kmc);
-                    synchronized (processed) {
-                        processed.add(processedWindow);
-                    }
+                    processed.add(processedWindow);
                     int completed = completedWindows.incrementAndGet();
                     float progress = (float) (completed * 100) / totalWindows;
                     synchronized (System.out) {
@@ -140,19 +144,15 @@ public class GetVariants implements Callable<Integer>, Runnable {
                     return null;
                 });
             }
-
-            // wait for all the windows to be processed
-            for (int i = 0; i < windows.size(); i++) {
-                try {
-                    // let's wait to get the results
-                    completionService.take().get();
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }
-            processedWindows.put(name, processed);
         }
-        executor.shutdown();
+
+        for (int i = 0; i < totalWindows; i++) {
+            try {
+                completionService.take().get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         System.out.print("\r");
         for (int i = 0; i < 100; i++) {
@@ -216,7 +216,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
                 localTotalKmers++;
                 Kmer km = new Kmer(k, kmc.isBothStrands());
 
-                if (kmc.isExist(km)) {
+                if (kmc.getCount(km) >= minKmerCount) {
                     // if the kmer exists in the KMC database, 1+ observed kmers
                     localObservedKmers++;
                     if (gapSize > 0) {
