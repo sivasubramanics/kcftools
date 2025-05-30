@@ -23,7 +23,7 @@
    - [findIBS](#findibs)
    - [splitKCF](#splitkcf)
    - [getAttributes](#getattributes)
-   - [genotypeMatrix](#genotypematrix)
+   - [kcfToMatrix](#kcftomatrix)
 - [LICENSE](#license)
 - [Contact](#contact)
 
@@ -131,7 +131,7 @@ kcftools getVariations [options]
 
 **Required Options:**
 
-	-r, --reference=<refFasta>    : Reference FASTA file  
+    -r, --reference=<refFasta>    : Reference FASTA file  
 	-k, --kmc=<kmcDBprefix>       : KMC database prefix  
 	-o, --output=<outFile>        : Output `.kcf` file  
 	-s, --sample=<sampleName>     : Sample name  
@@ -144,6 +144,7 @@ kcftools getVariations [options]
 	-g, --gtf=<gtfFile>           : GTF annotation file (for gene/transcript features)  
 	--wi, --wt, --wr              : Weights for inner distance, tail distance, and kmer ratio, respectively  
 	-m, --memory                  : Load KMC database into memory (faster for small DBs)
+    -c, --min-k-count             : Minimum k-mer count to consider (default: 1)
 ---
 
 ### `cohort`
@@ -153,11 +154,11 @@ Combine multiple `.kcf` files into a single cohort for population-level analysis
 kcftools cohort [options]
 ```
 
-**Options:**
+**Required Options:**
    
-      -i, --input=<file1>,<file2>,...  : Comma-separated list of KCF files
-      -l, --list=<listFile>            : File containing newline-separated KCF paths
-      -o, --output=<outFile>           : Output cohort `.kcf` file
+    -i, --input=<file1>,<file2>,...  : Comma-separated list of KCF files
+    -l, --list=<listFile>            : File containing newline-separated KCF paths
+    -o, --output=<outFile>           : Output cohort `.kcf` file
 
 ---
 
@@ -168,16 +169,19 @@ Identify Identity-by-State (IBS) or variable regions in a sample.
 kcftools findIBS [options]
 ```
 
-**Options:**
+**Required Options:**
 
-      -i, --input=<kcfFile>      : Input KCF file
-      -r, --reference=<refFasta> : Reference FASTA
-      -o, --output=<outFile>     : Output `.kcf` file
-      --bed                      : Also output BED file format
-      --summary                  : Write summary TSV report
-      --min=<minConsecutive>     : Minimum consecutive window count
-      --score=<cutOff>           : Score threshold
-      --var                      : Detect variable regions instead of IBS
+    -i, --input=<kcfFile>      : Input KCF file
+    -r, --reference=<refFasta> : Reference FASTA
+    -o, --output=<outFile>     : Output `.kcf` file
+
+**Optional:**
+
+    --bed                      : Also output BED file format
+    --summary                  : Write summary TSV report
+    --min=<minConsecutive>     : Minimum consecutive window count
+    --score=<cutOff>           : Score threshold
+    --var                      : Detect variable regions instead of IBS
 
 ---
 
@@ -188,10 +192,10 @@ Split a KCF file by chromosome.
 kcftools splitKCF [options]
 ```
 
-**Options:**
+**Required Options:**
 
-      -k, --kcf=<kcfFile>     : Input KCF file
-      -o, --output=<outDir>   : Output directory
+    -k, --kcf=<kcfFile>     : Input KCF file
+    -o, --output=<outDir>   : Output directory
 
 ---
 
@@ -202,10 +206,10 @@ Extract attributes from a KCF file into individual TSV files.
 kcftools getAttributes [options]
 ```
 
-**Options:**
+**Required Options:**
 
-      -i, --input=<kcfFile>   : Input `.kcf` file
-      -o, --output=<prefix>   : Output prefix (produces `.tsv`, `.json`, etc.)
+    -i, --input=<kcfFile>   : Input `.kcf` file
+    -o, --output=<prefix>   : Output prefix (produces `.tsv`, `.json`, etc.)
 
 ---
 
@@ -216,11 +220,19 @@ Generate a genotype matrix from a `.kcf` file, suitable for GWAS or population s
 kcftools kcfToMatrix [options]
 ```
 
-**Options:**
+**Required Options:**
       
-      -i, --input=<kcfFile>     : Input `.kcf` file
-      -o, --output=<prefix>     : Output matrix prefix
+    -i, --input=<kcfFile>     : Input `.kcf` file
+    -o, --output=<prefix>     : Output matrix prefix
 
+**Optional:**
+
+    -a, --score_a               : Minimum score for allele ref (default: 95)
+    -b, --score_b               : Minimum score for allele alt (default: 60)
+    -r, --rdata                 : Output R data file (default: false)
+    --maf                       : Minimum allele frequency (default: 0.05)
+    --max-missing               : Maximum missing data fraction (default: 0.8)
+    --chrs                      : List file of chromosomes to include (default: all)
 ---
 
 ### `increaseWindow`
@@ -230,11 +242,11 @@ Combine subsequent windows to generate the KCF file with increased window size.
 kcftools increaseWindow [options]
 ```
 
-**Options:**
+**Required Options:**
 
-        -i, --input=<kcfFile>       : Input `.kcf` file
-        -o, --output=<kcfFile>      : Output `.kcf` file
-        -w, --window=<windowSize>   : Window Size (must be higher than the input `.kcf` windowSize)
+    -i, --input=<kcfFile>       : Input `.kcf` file
+    -o, --output=<kcfFile>      : Output `.kcf` file
+    -w, --window=<windowSize>   : Window Size (must be higher than the input `.kcf` windowSize)
 
 ---
 
