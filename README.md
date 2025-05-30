@@ -6,9 +6,9 @@
 [![License: GPL v3.0 only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](https://www.gnu.org/licenses/gpl-3.0.html)
 <!--- badges: end --->
 
-# _KCFTOOLS_
+# KCFTOOLS
 
-**_KCFTOOLS_** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed k-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
+**KCFTOOLS** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed k-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
 
 ---
 ### Quick Start
@@ -41,12 +41,12 @@ To quickly get started with `kcftools`, refer to the [`run_kcftools.sh`](https:/
 
 ## Introduction
 
-_KCFTOOLS_ is designed for high-throughput genomic analysis using efficient k-mer based methods. By leveraging fast k-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
+KCFTOOLS is designed for high-throughput genomic analysis using efficient k-mer based methods. By leveraging fast k-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
 
 
 ## Methodology
 
-_KCFTOOLS_ (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calculated using the below formula,
+KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calculated using the below formula,
 
 $$
 \text{Identity Score} = W_o \cdot \left( \frac{\text{obs k-mers}}{\text{total k-mers}} \right) + W_i \cdot \left( 1 - \frac{\text{inner dist}}{\text{eff length}} \right) + W_t \cdot \left( 1 - \frac{\text{tail dist}}{\text{eff length}} \right) \cdot 100
@@ -288,7 +288,7 @@ kcftools increaseWindow [options]
 ---
 
 ## KCF file format
-K-Mer Count Format (`.kcf`) file summarizes the variation profile of a query relative to a reference genome based on k-mer presence/absence matrices.
+Kmer Count Format (`.kcf`) file summarizes the variation profile of a query relative to a reference genome based on k-mer presence/absence matrices.
 
 ### KCF File Header Description
 
