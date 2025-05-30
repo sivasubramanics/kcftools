@@ -37,7 +37,7 @@ KCFTOOLS is designed for high-throughput genomic analysis using efficient k-mer 
 
 ## Methodology
 
-KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows—either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calulcated using the below formula,
+KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference k-mers is screened against query k-mer databases built using KMC3. For each window, the number of observed k-mers is counted, and variations are identified as consecutive gaps between matching k-mers. These gaps are used to compute the k-mer distance, representing the number of bases not covered by observed k-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calulcated using the below formula,
 
 $$
 \text{Identity Score} = W_o \cdot \left( \frac{\text{obs k-mers}}{\text{total k-mers}} \right) + W_i \cdot \left( 1 - \frac{\text{inner dist}}{\text{eff length}} \right) + W_t \cdot \left( 1 - \frac{\text{tail dist}}{\text{eff length}} \right) \cdot 100
@@ -53,6 +53,7 @@ where:
 
 ![KCFTOOLS Methodology](images/kcftools_methodology.png)
 Figure: Overview of the `kcftools getVariations` methodology.
+
 ---
 
 ## Features
