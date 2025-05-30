@@ -196,7 +196,7 @@ kcftools splitKCF [options]
 ---
 
 ### `getAttributes`
-Extract and summarize metadata and attributes from a KCF file.
+Extract attributes from a KCF file into individual TSV files.
 
 ```bash
 kcftools getAttributes [options]
@@ -209,17 +209,32 @@ kcftools getAttributes [options]
 
 ---
 
-### `genotypeMatrix`
+### `kcfToMatrix`
 Generate a genotype matrix from a `.kcf` file, suitable for GWAS or population studies.
 
 ```bash
-kcftools genotypeMatrix [options]
+kcftools kcfToMatrix [options]
 ```
 
 **Options:**
       
       -i, --input=<kcfFile>     : Input `.kcf` file
       -o, --output=<prefix>     : Output matrix prefix
+
+---
+
+### `increaseWindow`
+Combine subsequent windows to generate the KCF file with increased window size. 
+
+```bash
+kcftools increaseWindow [options]
+```
+
+**Options:**
+
+        -i, --input=<kcfFile>       : Input `.kcf` file
+        -o, --output=<kcfFile>      : Output `.kcf` file
+        -w, --window=<windowSize>   : Window Size (must be higher than the input `.kcf` windowSize)
 
 ---
 
