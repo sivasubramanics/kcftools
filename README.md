@@ -52,7 +52,7 @@ where:
 - **eff length**: Effective length of the window (in base pairs), length of the reference window that is covered by total_kmers.
 
 ![KCFTOOLS Methodology](images/kcftools_methodology.png)
-*Figure: Overview of the `kcftools getVariations` methodology.*
+Figure: Overview of the `kcftools getVariations` methodology.
 ---
 
 ## Features
