@@ -52,7 +52,7 @@ where:
 - **eff length**: Effective length of the window (in base pairs), length of the reference window that is covered by total_kmers.
 
 ![KCFTOOLS Methodology](images/kcftools_methodology.png)
-Figure: Overview of the `kcftools getVariations` methodology.
+_Figure: Overview of the `kcftools getVariations` methodology._
 
 ---
 
@@ -68,6 +68,12 @@ Figure: Overview of the `kcftools getVariations` methodology.
 - **Conversion Utilities**: Export `.kcf` files to TSV format (to replicate IBSpy output).
 
 ---
+
+## Workflow
+
+![KCFTOOLS Workflow](images/kcftools_workflow.png)
+_Figure: Overview of the `kcftools` workflow_
+
 
 ## Installation
 
@@ -270,6 +276,134 @@ kcftools increaseWindow [options]
     -w, --window=<windowSize>   : Window Size (must be higher than the input `.kcf` windowSize)
 
 ---
+
+## KCF file format
+K-Mer Count Format (`.kcf`) file summarizes the variation profile of a query relative to a reference genome based on k-mer presence/absence matrices.
+
+### KCF File Header Description
+
+The `.kcf` file starts with a set of metadata headers describing the format, source, and parameters used during the k-mer based analysis. Below is a breakdown of each header:
+
+```
+##format=KCF0.1
+```
+Specifies the version of the KCF file format.
+
+```
+##date=2024-12-05
+```
+Date on which the file was generated.
+
+```
+##source=kcftools
+```
+Indicates the software used to generate the file (`kcftools`).
+
+```
+##reference=lsatv11.chr3.fasta
+```
+Reference genome FASTA file used to derive the reference k-mers.
+
+```
+##contig=<ID=chr3,length=324658466>
+```
+Describes the reference contig (chromosome ID and its length).
+
+```
+##INFO=<ID=IS,Type=Float,Description="Minimum score for the window">
+##INFO=<ID=XS,Type=Float,Description="Maximum score for the window">
+##INFO=<ID=MS,Type=Float,Description="Mean score for the window">
+##INFO=<ID=IO,Type=Integer,Description="Minimum observed kmers in the window">
+##INFO=<ID=XO,Type=Integer,Description="Maximum observed kmers in the window">
+##INFO=<ID=MO,Type=Integer,Description="Mean observed kmers in the window">
+##INFO=<ID=IV,Type=Integer,Description="Minimum variations in the window">
+##INFO=<ID=XV,Type=Integer,Description="Maximum variations in the window">
+##INFO=<ID=MV,Type=Integer,Description="Mean variations in the window">
+```
+These define window-level summary statistics for identity score (IS, XS, MS), observed k-mers (IO, XO, MO), and variations (IV, XV, MV).
+
+```
+##FORMAT=<ID=IB,Type=Integer,Description="IBS number">
+##FORMAT=<ID=VA,Type=Integer,Description="Variations">
+##FORMAT=<ID=OB,Type=Integer,Description="Observed kmers">
+##FORMAT=<ID=SC,Type=Float,Description="Score">
+```
+Define per-sample fields: identity-by-state (IB), number of variations (VA), number of observed k-mers (OB), and calculated score (SC).
+
+```
+##PARAM=<ID=window,value=50000>
+##PARAM=<ID=kmer,value=31>
+##PARAM=<ID=IBS,value=false>
+##PARAM=<ID=nwindow,value=6498>
+```
+`kcftools` runtime parameters: window size, k-mer length, IBS mode, and total number of windows.
+
+```
+##CMD=kcftools-0.0.1-SNAPSHOT.jar getVariations -k lsal.chr3 -o lsal.kcftools.kcf -r lsatv11.chr3.fasta -s lsal -t 24 -w 50000
+```
+The command-line(s) invocation used to produce the `.kcf` file for reproducibility.
+
+### KCF File Data Column Description
+
+Each row in the KCF file represents a non-overlapping genomic window analyzed for k-mer presence/absence variation. Below are the descriptions for each column:
+
+```
+#CHROM
+```
+Reference chromosome or contig name.
+
+```
+START
+```
+Start position (0-based) of the window on the reference genome.
+
+```
+END
+```
+End position (0-based, exclusive) of the window on the reference genome.
+
+```
+TOTAL_KMERS
+```
+Total number of k-mers generated from the reference for this window.
+
+```
+INFO
+```
+Semicolon-separated window-level summary statistics:
+- `IS`: Minimum Identity Score
+- `XS`: Maximum Identity Score
+- `MS`: Mean Identity Score
+- `IO`: Minimum observed k-mers in this window
+- `XO`: Maximum observed k-mers
+- `MO`: Mean observed k-mers
+- `IV`: Minimum number of variations
+- `XV`: Maximum variations
+- `MV`: Mean number of variations
+
+```
+FORMAT
+```
+Defines the order of data fields in the sample column(s). Typically includes:
+- `GT`: Genotype or status field (placeholder), '`N`' == not IBS to the reference.
+- `VA`: Number of variations in this window
+- `OB`: Observed number of matching k-mers
+- `ID`: Inner k-mer distance
+- `LD`: Left tail k-mer distance
+- `RD`: Right tail k-mer distance
+- `SC`: Computed identity score for the window
+
+```
+<Sample>
+```
+One or more columns for each sample, following the `FORMAT` specification. Example:
+```
+N:3:914:24:19:0:96.97
+```
+Means: isIBS `N`, 3 variations, 914 observed k-mers, 24 inner distance, 19 left tail distance, 0 right tail distance, and an identity score of 96.97.
+
+---
+
 
 ## Notes
 
