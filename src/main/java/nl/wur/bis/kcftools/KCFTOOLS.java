@@ -9,7 +9,7 @@ import picocli.CommandLine.*;
  * This is the main class for the KCFTOOLS tool
  */
 @Command(name = "kcftools", description = "Tools to handle kmer counting based variations.",
-        mixinStandardHelpOptions = true, version = "kcftools 0.0.1",
+        mixinStandardHelpOptions = true, version = "kcftools 0.1.0",
         subcommands = {
                 GetVariants.class,
                 Cohort.class,
