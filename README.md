@@ -25,6 +25,8 @@ To quickly get started with `kcftools`, refer to the [`run_kcftools.sh`](https:/
 - [Installation](#installation)
 - [Limitations and Performance Notes](#-limitations-and-performance-notes)
 - [Usage](#usage)
+   - [kmc database](#kmc-database)
+   - [General Usage](#general-usage)
    - [getVariations](#getvariations)
    - [cohort](#cohort)
    - [findIBS](#findibs)
@@ -151,6 +153,26 @@ conda install -c bioconda kcftools
 ---
 
 ## Usage
+
+### `kmc` database
+To use `kcftools`, you first need to create a KMC database from your query data (fasta/fastq). This can be done using the KMC tool:
+
+#### Example command to run kmc
+```bash
+
+# multi fasta files:
+kmc -k31 -m4 -t2 -ci0 -p9 -fm <input_fasta> <output_prefix> tmp
+
+# fastq files:
+kmc -k31 -m4 -t2 -ci0 -p9 -fq <input_fastq> <output_prefix> tmp
+
+# list of fastq files:
+kmc -k31 -m4 -t2 -ci0 -p9 -fq @<input_fastq_list_file> <output_prefix> tmp
+
+```
+---
+
+### General Usage
 
 `kcftools` provides several subcommands. General usage:
 
