@@ -4,7 +4,7 @@ package nl.wur.bis.kcftools.Utils;
  * Enum to store the configuration values for the KCF file format
  */
 public enum Configs {
-    KCF_VERSION("0.0.1"),
+    KCF_VERSION("0.1.0"),
     KCF_SOURCE("kcftools"),
     KCF_DATE(HelperFunctions.getTodayDate()),
     KCF_INFO_LINES(

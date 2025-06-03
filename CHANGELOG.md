@@ -22,3 +22,4 @@ All notable changes to this project will be documented in this file.
 ### Added
 - First minor release with core functionality. [`#e465f4a`](https://github.com/sivasubramanics/kcftools/commit/e465f4a)
 - Initial public release of `kcftools` in Bioconda.
+
