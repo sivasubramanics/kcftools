@@ -1,6 +1,6 @@
 # Quick Start
 
-This is a quick start guide to use **KCFTOOLS** for genomic variation analysis. It covers installation, database preparation, and basic usage. We recommend reading the [Workflow](/general/workflow/) and [Methodology](/general/methodology/) sections for a more detailed understanding of the tool's functionalities.
+This is a quick start guide to use **KCFTOOLS** for genomic variation analysis. It covers installation, database preparation, and basic usage. We recommend reading the [Workflow](workflow.md) and [Methodology](methodology.md) sections for a more detailed understanding of the tool's functionalities.
 
 ---
 
