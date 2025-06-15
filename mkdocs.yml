@@ -5,7 +5,7 @@ repo_name: sivasubramanics/kcftools
 site_author: Sivasubramani C S
 copyright: Copyright © 2024
 theme:
-  name: material
+  name: readthedocs
   features:
     - navigation.instant
     - navigation.tracking
@@ -60,9 +60,11 @@ markdown_extensions:
       permalink: true
 
 plugins:
-  - search
-  - mkdocs-material
-  - markdownextradata
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+#  - minify:
+#      minify_html: true
+#  - macros
 
 extra_css:
   - stylesheets/extra.css

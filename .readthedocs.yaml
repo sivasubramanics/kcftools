@@ -35,10 +35,9 @@
     # We recommend using a requirements file for reproducible builds.
     # This is just a quick example to get started.
     # https://docs.readthedocs.io/page/guides/reproducible-builds.html
-
-  python:
-    install:
-      - requirements: docs/requirements.txt
+    jobs:
+      pre_install:
+        - pip install mkdocs-material
 
   mkdocs:
     configuration: mkdocs.yml
