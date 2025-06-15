@@ -5,7 +5,7 @@ repo_name: sivasubramanics/kcftools
 site_author: Sivasubramani C S
 copyright: Copyright © 2024
 theme:
-  name: readthedocs
+  name: material
   features:
     - navigation.instant
     - navigation.tracking
