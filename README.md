@@ -4,11 +4,14 @@
 [![Release](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml/badge.svg)](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml)
 [![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
 [![License: GPL v3.0 only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Docs](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://kcftools.readthedocs.io)
 <!--- badges: end --->
 
 # KCFTOOLS
 
 **KCFTOOLS** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed *k*-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
+
+Detailed documentation is available at **[kcftools.readthedocs.io](https://kcftools.readthedocs.io)**.
 
 ---
 ### Quick Start
