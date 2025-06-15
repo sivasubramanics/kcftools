@@ -37,12 +37,13 @@ nav:
       - getAttributes: usage/getAttributes.md
       - kcfToMatrix: usage/kcfToMatrix.md
       - increaseWindow: usage/increaseWindow.md
+      - kcf2tsv: usage/kcf2tsv.md
   - File Formats:
-      - KCF File Format: format/kcf.md
-      - KMC Database: format/kmc.md
-      - Genotype Matrix: format/matrix.md
-      - Attribute File Format: format/attributes.md
-      - FindIBS Summary: format/findibs.md
+      - KCF File Format: formats/kcf.md
+      - KMC Database: formats/kmc.md
+      - Genotype Matrix: formats/matrix.md
+      - Attribute File Format: formats/attributes.md
+      - IBS Summary: formats/ibs.md
   - Additional Information:
       - More: misc.md
 
