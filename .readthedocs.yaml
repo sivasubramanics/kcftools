@@ -38,6 +38,7 @@
     jobs:
       pre_install:
         - pip install mkdocs-material
+        - pip install mkdocs-ezlinks-plugin
 
   mkdocs:
     configuration: mkdocs.yml
