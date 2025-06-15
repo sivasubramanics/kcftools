@@ -1,0 +1,89 @@
+site_name: KCFTOOLS
+site_url: https://sivasubramanics.github.io/kcftools
+repo_url: https://github.com/sivasubramanics/kcftools
+repo_name: sivasubramanics/kcftools
+site_author: Sivasubramani C S
+copyright: Copyright © 2024
+theme:
+  name: readthedocs
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+    - navigation.sections
+    - header.autohide
+  palette:
+    - scheme: default
+      primary: teal
+      accent: deep orange
+
+nav:
+  - kcftools: index.md
+  - General:
+    - Quick Start: general/quickstart.md
+    - Installation: general/installation.md
+    - Workflow: general/workflow.md
+    - Features: general/features.md
+    - Methodology: general/methodology.md
+    - Limitations: general/limitations.md
+  - Usage:
+      - General Usage: usage/cli.md
+      - getVariations: usage/getVariations.md
+      - cohort: usage/cohort.md
+      - findIBS: usage/findIBS.md
+      - splitKCF: usage/splitKCF.md
+      - getAttributes: usage/getAttributes.md
+      - kcfToMatrix: usage/kcfToMatrix.md
+      - increaseWindow: usage/increaseWindow.md
+      - kcf2tsv: usage/kcf2tsv.md
+  - File Formats:
+      - KCF File Format: formats/kcf.md
+      - KMC Database: formats/kmc.md
+      - Genotype Matrix: formats/matrix.md
+      - Attribute File Format: formats/attributes.md
+      - IBS Summary: formats/ibs.md
+  - Additional Information:
+      - More: misc.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - ezlinks
+#  - minify:
+#      minify_html: true
+#  - macros
+
+extra_css:
+  - stylesheets/extra.css
+  - https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - mathjaxhelper.js
+  - https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js
+  - https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js
+  - js/katex.js  # (create this file as described below)
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sivasubramanics/kcftools
+    - icon: fontawesome/brands/conda-forge
+      link: https://anaconda.org/bioconda/kcftools
+    - icon: fontawesome/solid/code-branch
+      link: https://github.com/sivasubramanics/kcftools/releases
