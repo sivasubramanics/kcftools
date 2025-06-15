@@ -2,4 +2,5 @@ sphinx-rtd-theme
 recommonmark
 sphinxemoji
 sphinx-markdown-tables
-mkdocs-ezlinks-pluginmkdocs-ezlinks-plugin
+mkdocs-material
+mkdocs-ezlinks-plugin
