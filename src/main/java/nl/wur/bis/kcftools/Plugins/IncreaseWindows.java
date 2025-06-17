@@ -150,7 +150,7 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
         int winIndex = 0;
 
         for (Window window : windows) {
-            tot += window.getTotalKmers();
+            tot += window.getTotalKmers() - 1;
             for (int i = 0; i < headerSamples.length; i++) {
                 Data data = window.getData().get(headerSamples[i]);
                 if (data == null) {
