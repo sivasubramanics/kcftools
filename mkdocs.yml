@@ -20,7 +20,7 @@ theme:
       accent: deep orange
 
 nav:
-  - kcftools: index.md
+  - Home: index.md
   - General:
     - Quick Start: general/quickstart.md
     - Installation: general/installation.md
