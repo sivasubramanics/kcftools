@@ -5,6 +5,8 @@ import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
+import java.util.Locale;
+
 /***
  * This is the main class for the KCFTOOLS tool
  */
@@ -23,6 +25,7 @@ import picocli.CommandLine.*;
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
         final KCFTOOLS kcftools = new KCFTOOLS();
         final CommandLine cmd = new CommandLine(kcftools);
 
