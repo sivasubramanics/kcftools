@@ -18,6 +18,12 @@
 	</properties>
 
 	<dependencies>
+		<!-- JGraphT for GTF features -->
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+			<version>1.5.2</version>
+		</dependency>
 		<!-- Picocli for CLI parsing -->
 		<dependency>
 			<groupId>info.picocli</groupId>
