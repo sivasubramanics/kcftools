@@ -9,7 +9,6 @@ import picocli.CommandLine.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /***
@@ -61,7 +60,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private final String CLASS_NAME = this.getClass().getSimpleName();
     private FastaIndex index;
     private int kmerSize;
-    private GTFReader gtfReader;
+    private GTF gtf;
     private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
 
     public GetVariants() {
@@ -106,7 +105,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         ConcurrentHashMap<String, Queue<Window>> windowsMap = new ConcurrentHashMap<>();
 
         if (featureType.equals("gene") || featureType.equals("transcript")){
-            gtfReader = new GTFReader(gtfFile);
+            gtf = new GTF(gtfFile);
         }
 
         Logger.info(CLASS_NAME, "Generating windows...");
@@ -184,7 +183,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private Fasta getFasta(Window window){
         return switch (featureType) {
             case "window" -> window.getFasta(index);
-            case "gene", "transcript" -> gtfReader.getFasta(window.getWindowId(), featureType, index);
+            case "gene", "transcript" -> gtf.getFasta(window.getWindowId(), index, featureType.equals("gene"));
             default -> {
                 Logger.error(CLASS_NAME, "Invalid model type: " + featureType + ". Supported models are 'window' or 'gene' or 'transcript'");
                 yield null;
@@ -276,7 +275,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
             case "window" -> {
                 int lastEnd = 0;
                 while (lastEnd < sequenceLength) {
-                    int start = Math.max(0, lastEnd - kmerSize);
+                    int start = Math.max(0, lastEnd - kmerSize + 1);
                     int end = Math.min(start + windowSize, sequenceLength);
                     if (end - start >= kmerSize) {
                         windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
@@ -284,9 +283,29 @@ public class GetVariants implements Callable<Integer>, Runnable {
                     lastEnd = end;
                 }
             }
-            case "gene", "transcript" -> {
-                for (GTFReader.Feature feature : gtfReader.getFeatures(sequenceName, featureType)) {
-                    windows.add(new Window(feature.getId(), sequenceName, feature.getStart(), feature.getEnd()));
+            case "gene" -> {
+                String[] genes = gtf.getGenes(sequenceName);
+                for (String gene : genes) {
+                    GTF.Loci loci = gtf.getLoci(gene);
+                    windows.add(new Window(gene, loci.getChromosome(), loci.getStart(), loci.getEnd()));
+                }
+            }
+            case "transcript" -> {
+                String[] genes = gtf.getGenes(sequenceName);
+                if (genes.length == 0) {
+                    Logger.warning(CLASS_NAME, "No genes found in GTF file for sequence: " + sequenceName);
+                    return windows;
+                }
+                for (String gene : genes) {
+                    String[] transcripts = gtf.getTranscripts(gene);
+                    if (transcripts.length == 0) {
+                        Logger.error(CLASS_NAME, "No transcripts found for gene: " + gene + " in GTF file for sequence: " + sequenceName);
+                        continue;
+                    }
+                    for (String transcript : transcripts) {
+                        GTF.Loci loci = gtf.getLoci(transcript);
+                        windows.add(new Window(transcript, loci.getChromosome(), loci.getStart(), loci.getEnd()));
+                    }
                 }
             }
             default -> Logger.error(CLASS_NAME, "Invalid model type: " + featureType + ". Supported models are 'window' or 'gene' or 'transcript'");
