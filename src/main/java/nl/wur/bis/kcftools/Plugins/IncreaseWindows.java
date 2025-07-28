@@ -1,20 +1,20 @@
 package nl.wur.bis.kcftools.Plugins;
 
-import nl.wur.bis.kcftools.Data.*;
-import nl.wur.bis.kcftools.Utils.HelperFunctions;
-import nl.wur.bis.kcftools.Utils.Logger;
-import picocli.CommandLine.*;
-
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import nl.wur.bis.kcftools.Data.*;
+import nl.wur.bis.kcftools.Utils.HelperFunctions;
+import nl.wur.bis.kcftools.Utils.Logger;
+import picocli.CommandLine.*;
 
 /***
  * This is a command line plugin that increases the window size of a KCF file by merging windows
  */
 @Command(name = "increaseWindow", description = "Increase the window size of a KCF file by merging windows")
 public class IncreaseWindows implements Runnable, Callable<Integer> {
+
     @Option(names = {"-i", "--input"}, description = "Input KCF file", required = true)
     private String inFile;
 
@@ -35,7 +35,6 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
             Map<String, Window> newWindows = processWindows(reader, header);
 
             writeOutput(header, newWindows);
-
         } catch (Exception e) {
             Logger.error(CLASS_NAME, "Error processing KCF file " + inFile);
             throw e;
@@ -148,45 +147,62 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
 
         boolean singleWindow = (totalWindows == 1);
         int winIndex = 0;
+        int[] prevRightDistance = new int[headerSamples.length]; // right distance of previous window
 
         for (Window window : windows) {
-            tot += window.getTotalKmers() - 1;
+            tot += window.getTotalKmers();
+
             for (int i = 0; i < headerSamples.length; i++) {
                 Data data = window.getData().get(headerSamples[i]);
                 if (data == null) {
                     continue;
                 }
-                va[i] += data.getVariations();
+
+                int left = data.getLeftDistance();
+                int right = data.getRightDistance();
+                int vars = data.getVariations();
+
+                // adjust variation count for overlap
+                if (prevRightDistance[i] > 0 && left > 0 && vars > 0) {
+                    va[i] += (vars - 1); // subtract 1 for overlap
+                } else {
+                    va[i] += vars;
+                }
+
                 ob[i] += data.getObservedKmers();
                 id[i] += data.getInnerDistance();
 
                 if (singleWindow) {
-                    // single window: normal handling
-                    ld[i] += data.getLeftDistance();
-                    rd[i] += data.getRightDistance();
+                    ld[i] += left;
+                    rd[i] += right;
                 } else if (winIndex == 0) {
-                    // first window of many
-                    ld[i] += data.getLeftDistance();
-                    id[i] += data.getRightDistance();
+                    ld[i] += left;
+                    id[i] += right;
                 } else if (winIndex == totalWindows - 1) {
-                    // last window of many
-                    rd[i] += data.getRightDistance();
-                    id[i] += data.getLeftDistance();
+                    rd[i] += right;
+                    id[i] += left;
                 } else {
-                    // middle windows
-                    id[i] += data.getLeftDistance() + data.getRightDistance();
+                    id[i] += left + right;
                 }
+
+                prevRightDistance[i] = right; // track for next iteration
             }
             winIndex++;
         }
-        Window newWindow = new Window(windows.getFirst().getSequenceName() + "_" + newStart,
-                windows.getFirst().getSequenceName(),
-                newStart,
-                newEnd);
+        Window newWindow = new Window(windows.getFirst().getSequenceName() + "_" + newStart, windows.getFirst().getSequenceName(), newStart, newEnd);
         newWindow.addTotalKmers(tot);
         newWindow.setEffLength(newEnd - newStart);
         for (int i = 0; i < headerSamples.length; i++) {
-            newWindow.addData(headerSamples[i], ob[i], va[i], id[i], ld[i], rd[i], "N", weights);
+            newWindow.addData(
+                headerSamples[i],
+                ob[i],
+                va[i],
+                id[i],
+                ld[i],
+                rd[i],
+                "N",
+                weights
+            );
         }
         return newWindow;
     }
