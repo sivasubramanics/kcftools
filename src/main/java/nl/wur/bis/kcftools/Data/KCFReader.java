@@ -39,6 +39,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
                 headerBuilder.append(line).append("\n");
                 header = new KCFHeader(headerBuilder.toString());
             } catch (IOException e) {
+                Logger.error(CLASS_NAME, "Error reading KCF file header: " + filename);
                 throw new RuntimeException("Error reading KCF file header", e);
             }
         }
@@ -73,6 +74,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
                     }
                 }
             } catch (IOException e) {
+                Logger.error(CLASS_NAME, "Error initializing KCF file reader: " + filename);
                 throw new RuntimeException("Error initializing KCF file reader", e);
             }
         }
