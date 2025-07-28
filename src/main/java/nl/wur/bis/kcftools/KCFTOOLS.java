@@ -21,7 +21,8 @@ import java.util.Locale;
                 KCFToMatrix.class,
                 KCFToTSV.class,
                 CompareIBS.class,
-                IncreaseWindows.class
+                IncreaseWindows.class,
+                KCFToPed.class,
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
