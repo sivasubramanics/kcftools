@@ -23,11 +23,14 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
     @Option(names = {"-o", "--output"}, description = "Output file prefix", required = true)
     private String outPrefix;
 
-    @Option(names = {"-a", "--score_a"}, description = "Lower score cut-off for reference allele", required = false)
+    @Option(names = {"-a", "--score_a"}, description = "Lower score cut-off for reference allele (default = 95.0)", required = false)
     private double scoreA = 95.0;
 
-    @Option(names = {"-b", "--score_b"}, description = "Lower score cut-off for alternate allele", required = false)
+    @Option(names = {"-b", "--score_b"}, description = "Lower score cut-off for alternate allele (default = 60.0)", required = false)
     private double scoreB = 60.0;
+
+    @Option(names = {"--score_n"}, description = "Score value for missing data (default = 30.0)", required = false)
+    private double scoreN = 30.0;
 
     @Option(names = {"-r", "--rdata"}, description = "Convert the matrix to RData", required = false)
     private boolean rdata = false;
@@ -115,7 +118,7 @@ public class KCFToMatrix implements Callable<Integer>, Runnable {
                     } else if (score >= scoreB) {
                         matrix[j][i] = 2;
                         alleles[j] = 2;
-                    } else if (score == 0) {
+                    } else if (score <= scoreN) {
                         matrix[j][i] = -1;
                         alleles[j] = -1; // missing data
                     } else {

@@ -18,7 +18,6 @@ import java.util.Locale;
                 FindIBS.class,
                 SplitKCF.class,
                 GetAttributes.class,
-                KCFToMatrix.class,
                 KCFToTSV.class,
                 CompareIBS.class,
                 IncreaseWindows.class,
