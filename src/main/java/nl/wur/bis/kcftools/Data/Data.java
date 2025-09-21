@@ -1,5 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
+import nl.wur.bis.kcftools.Utils.Logger;
 /**
  * Data class to store the data for each window
  * observedKmers: number of kmers observed in the window
@@ -20,6 +21,8 @@ public class Data{
     int ibs;
     int leftDistance;
     int rightDistance;
+
+    private final String CLASS_NAME = this.getClass().getSimpleName();
 
     public Data(int observedKmers,
                 int variations,
@@ -96,7 +99,9 @@ public class Data{
      * Get TSV formated string representation of the data (to write in native IBSpy table format)
      */
     public String toTSV() {
-        return getObservedKmers() + "\t" + getVariations() + "\t" + getInnerDistance() + getTailDistance();
+        int distance = getInnerDistance() + getTailDistance();
+        double score = getScore();
+        return getObservedKmers() + "\t" + getVariations() + "\t" + distance + "\t" + String.format("%.2f", score);
     }
 
     /***

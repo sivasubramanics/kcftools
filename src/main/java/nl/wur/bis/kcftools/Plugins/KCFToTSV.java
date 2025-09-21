@@ -91,9 +91,11 @@ public class KCFToTSV implements Callable<Integer>, Runnable {
      */
     private void writeTSV(Window[] windows,String sample){
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile + "." + sample + ".tsv"))) {
-            writer.write("seqname\tstart\tend\ttotal_kmers\tobserved_kmers\tvariations\tkmer_distance\n");
+            writer.write("window_id\tseqname\tstart\tend\teff_len\ttotal_kmers\tobserved_kmers\tvariations\tkmer_distance\tscore\n");
             for (Window window : windows) {
-                writer.write(window.toTSV(sample) + "\n");
+                if (window != null) {
+                    writer.write(window.toTSV(sample) + "\n");
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -274,7 +274,7 @@ public class Window implements Comparable<Window> {
     }
 
     public String toTSV(String sample) {
-        return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
+        return getWindowId() + "\t" + sequenceName + "\t" + start + "\t" + end + "\t" + getEffLength() + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
     }
 
     public void setEffLength(int atgcCount) {
