@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-@Command(name = "kcfToGenotypeTable", description = "Convert KCF to Genotype Table")
+@Command(name = "kcf2gt", description = "Convert KCF to Genotype Table")
 public class KCFToGenotypeTable implements Callable<Integer>, Runnable {
 
     @Option(names = {"-i", "--input"}, description = "Input KCF file", required = true)
