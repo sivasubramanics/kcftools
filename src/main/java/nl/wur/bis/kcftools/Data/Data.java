@@ -66,14 +66,17 @@ public class Data{
      * Compute the score of the window
      */
     public double computeScore(int totalKmers, int effLength, double[] weights){
-        if ((observedKmers == 0) || (totalKmers == 0) || (effLength == 0)){
+        if ((getObservedKmers() == 0) || (totalKmers == 0) || (effLength == 0)){
             return 0;
         }
 //        old method of scoring
 //        return (float) (observedKmers - variations) * 100 / totalKmers;
-        return ((weights[2] * ((double) observedKmers / totalKmers))
-                + (weights[0] * (1.0f - ((double) innerDistance / effLength)))
-                + (weights[1] * (1.0f - ((double) tailDistance / effLength)))) * 100.0f;
+        if (weights[0] + weights[1] + weights[2] != 1.0){
+            Logger.error(CLASS_NAME, "Weights should sum to 1.0");
+        }
+        return ((weights[2] * ((double) getObservedKmers() / totalKmers))
+                + (weights[0] * (1.0f - ((double) getInnerDistance() / effLength)))
+                + (weights[1] * (1.0f - ((double) getTailDistance() / effLength)))) * 100.0f;
     }
 
     /***
