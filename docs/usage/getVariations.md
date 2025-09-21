@@ -34,6 +34,7 @@ The `getVariations` command screens for reference k-mers that are **not** presen
 | `-w`, `--window=<windowSize>`          | Window size in base pairs (used with `--feature=window`)                    | _N/A_    |
 | `-g`, `--gtf=<gtfFile>`                | GTF file with annotations (required for `gene` or `transcript` features)   | _N/A_    |
 | `-c`, `--min-k-count=<minKmerCount>`   | Minimum *k*-mer count threshold to consider valid                           | `1`      |
+| `-p`, `--step=<stepSize>`                | Step size in base pairs for sliding windows (used with `--feature=window`)  | `windowSize` |
 
 ---
 
