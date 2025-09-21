@@ -23,6 +23,7 @@ import java.util.Locale;
                 CompareIBS.class,
                 IncreaseWindows.class,
                 KCFToPed.class,
+                ScoreRecalc.class,
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
