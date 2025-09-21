@@ -30,10 +30,11 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
     public Integer call() throws Exception {
         try (KCFReader reader = new KCFReader(inFile)) {
             KCFHeader header = reader.getHeader();
+            if (header.getStepSize() > 0){
+                Logger.error(CLASS_NAME, "Cannot increase window size of a KCF file with overlapping windows (stepSize > 0)");
+            }
             validateWindowSize(header.getWindowSize());
-
             Map<String, Window> newWindows = processWindows(reader, header);
-
             writeOutput(header, newWindows);
         } catch (Exception e) {
             Logger.error(CLASS_NAME, "Error processing KCF file " + inFile);

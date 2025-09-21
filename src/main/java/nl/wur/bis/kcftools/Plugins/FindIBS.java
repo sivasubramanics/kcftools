@@ -78,6 +78,10 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
         KCFReader reader = new KCFReader(inFile);
         KCFHeader header = reader.getHeader();
+        if (header.getStepSize() > 0){
+            minConsecutive = header.getWindowSize() / header.getStepSize();
+            Logger.warning(CLASS_NAME, "Input KCF file is created with step size. Hence we are using the --min = windowSize/stepSize [" + minConsecutive + "]");
+        }
         HashMap<String, Integer> windowsCount = new HashMap<>();
         HashMap<String, ArrayList<Window>> windowsList = new HashMap<>();
         for (Window window: reader) {
