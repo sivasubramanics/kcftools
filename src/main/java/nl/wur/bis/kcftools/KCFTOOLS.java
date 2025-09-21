@@ -19,7 +19,7 @@ import java.util.Locale;
                 SplitKCF.class,
                 GetAttributes.class,
                 KCFToTSV.class,
-                CompareIBS.class,
+//                CompareIBS.class,
                 IncreaseWindows.class,
                 KCFToPed.class,
                 ScoreRecalc.class,
