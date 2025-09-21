@@ -146,7 +146,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
                         if (!firstIBSFound) {
                             blockNum = 1;
                             firstIBSFound = true;
-                        } else if (numNA >= minConsecutive || (blockChrom != null && !blockChrom.equals(chromName))) {
+                        } else if (numNA > minConsecutive || (blockChrom != null && !blockChrom.equals(chromName))) {
                             blockNum++;
                         }
                         blockChrom = chromName;
