@@ -140,7 +140,7 @@ public class FindIBS implements Callable<Integer>, Runnable {
                     }
 
                     score = window.getScore(sample);
-                    isIBSRegion = detectVar ? (score < 85 && score >= 60 ) : score >= scoreCutOff;
+                    isIBSRegion = detectVar ? score < scoreCutOff  : score >= scoreCutOff;
 
                     if (isIBSRegion) {
                         if (!firstIBSFound) {
