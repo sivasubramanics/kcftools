@@ -377,6 +377,11 @@ public class GetVariants implements Callable<Integer>, Runnable {
             Logger.error(CLASS_NAME, "Number of threads should be greater than 0");
         }
 
+        if (minKmerCount < 1) {
+            Logger.error(CLASS_NAME, "Minimum kmer count should be at least 1");
+        }
+    }
+
     private double[] getWeights(){
         return new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
     }
