@@ -64,7 +64,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
     private FastaIndex index;
     private int kmerSize;
     private GTF gtf;
-    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
+//    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
 
     public GetVariants() {
     }
@@ -251,7 +251,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", weights);
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", getWeights());
         }
 
         return window;
@@ -376,6 +376,9 @@ public class GetVariants implements Callable<Integer>, Runnable {
         if (nThreads <= 0) {
             Logger.error(CLASS_NAME, "Number of threads should be greater than 0");
         }
+
+    private double[] getWeights(){
+        return new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
     }
 }
 //EOF
