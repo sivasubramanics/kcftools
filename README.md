@@ -35,7 +35,11 @@ To quickly get started with `kcftools`, refer to the [`run_kcftools.sh`](https:/
    - [findIBS](#findibs)
    - [splitKCF](#splitkcf)
    - [getAttributes](#getattributes)
-   - [kcfToMatrix](#kcftomatrix)
+   - [kcf2tsv](#kcf2tsv)
+   - [increaseWindow](#increasewindow)
+   - [kcf2plink](#kcf2plink)
+   - [scoreRecalc](#scorerecalc)
+   - [kcf2gt](#kcf2gt)
 - [KCF File Format](#kcf-file-format)
   - [KCF Header format](#kcf-file-header-description)
   - [KCF Data format](#kcf-file-data-column-description)
@@ -77,9 +81,9 @@ _Figure: Overview of the `kcftools getVariations` methodology._
 - **IBS Window Identification**: Identify Identity-by-State (IBS) windows or variable regions across samples.
 - **Chromosome-wise Splitting**: Partition KCF files by chromosome for parallel or targeted analysis.
 - **Attribute Extraction**: Generate summaries and detailed statistics from `.kcf` files.
-- **Genotype Matrix Generation**: Convert `.kcf` files into population-level genotype matrices.
+- **Genotype Table Generation**: Convert `.kcf` files into population-level genotype table.
 - **Window Composition**: Compose larger genomic windows from finer-grained `.kcf` data.
-- **Conversion Utilities**: Export `.kcf` files to TSV format (to replicate IBSpy output).
+- **Conversion Utilities**: Export `.kcf` files to TSV format (to replicate IBSpy-like output).
 
 ---
 
@@ -207,6 +211,7 @@ kcftools getVariations [options]
 	--wi, --wt, --wr              : Weights for inner distance, tail distance, and kmer ratio, respectively  
 	-m, --memory                  : Load KMC database into memory (faster for small DBs)
     -c, --min-k-count             : Minimum *k*-mer count to consider (default: 1)
+    -p, --step                    : Step size for sliding windows (default: window size, i.e., non-overlapping)
 ---
 
 ### `cohort`
@@ -275,23 +280,23 @@ kcftools getAttributes [options]
 
 ---
 
-### `kcfToMatrix`
+### `kcf2gt`
 Generate a genotype matrix from a `.kcf` file, suitable for GWAS or population studies.
 
 ```bash
-kcftools kcfToMatrix [options]
+kcftools kcf2gt [options]
 ```
 
 **Required Options:**
       
     -i, --input=<kcfFile>     : Input `.kcf` file
-    -o, --output=<prefix>     : Output matrix prefix
+    -o, --output=<gtFile>     : Output genotype table file
 
 **Optional:**
 
-    -a, --score_a               : Minimum score for allele ref (default: 95)
-    -b, --score_b               : Minimum score for allele alt (default: 60)
-    -r, --rdata                 : Output R data file (default: false)
+    --score_a                   : Minimum score for allele ref (default: 95)
+    --score_b                   : Minimum score for allele alt (default: 60)
+    --score_n                   : Minimum score for allele missing (default: 30)
     --maf                       : Minimum allele frequency (default: 0.05)
     --max-missing               : Maximum missing data fraction (default: 0.8)
     --chrs                      : List file of chromosomes to include (default: all)
@@ -310,6 +315,58 @@ kcftools increaseWindow [options]
     -o, --output=<kcfFile>      : Output `.kcf` file
     -w, --window=<windowSize>   : Window Size (must be higher than the input `.kcf` windowSize)
 
+---
+
+### `kcf2tsv`
+Convert a `.kcf` file to a TSV format similar to IBSpy output (with scores).
+
+```bash
+kcftools kcf2tsv [options]
+```
+
+**Required Options:**
+
+    -i, --input=<kcfFile>       : Input `.kcf` file
+    -o, --output=<tsvFile>      : Output TSV file prefix
+    -s, --sample=<sampleName>   : Sample name
+
+---
+
+### `kcf2plink`
+Convert a `.kcf` file to PLINK format for downstream genetic analysis (experimental feature).
+
+```bash
+kcftools kcf2plink [options]
+```
+
+**Required Options:**
+
+    -i, --input=<kcfFile>       : Input `.kcf` file
+    -o, --output=<plinkPrefix>  : Output PLINK file prefix
+
+**Optional:**
+
+    --score_a                   : Minimum score for allele ref (default: 95)
+    --score_b                   : Minimum score for allele alt (default: 60)
+    --score_n                   : Minimum score for allele missing (default: 30)
+    --maf                       : Minimum allele frequency (default: 0.05)
+    --max-missing               : Maximum missing data fraction (default: 0.8)
+    --chrs                      : List file of chromosomes to include (default: all)
+---
+### `scoreRecalc`
+Recalculate identity scores in a `.kcf` file using new weights for inner distance, tail distance, and kmer ratio.
+
+```bash
+kcftools scoreRecalc [options]
+```
+
+**Required Options:**
+
+    -i, --input=<kcfFile>       : Input `.kcf` file
+    -o, --output=<kcfFile>      : Output `.kcf` file
+    --wi=<weightInner>          : Weight for inner distance
+    --wt=<weightTail>           : Weight for tail distance
+    --wr=<weightKmerRatio>      : Weight for kmer ratio
 ---
 
 ## KCF file format

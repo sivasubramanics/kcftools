@@ -82,6 +82,12 @@ public class Window implements Comparable<Window> {
         d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
 
+    public void recalcScore(double[] weights){
+        for (Data d : data.values()){
+            d.score = d.computeScore(totalKmers, effLength, weights);
+        }
+    }
+
     @Override
     public String toString(){
         StringBuilder sb = new StringBuilder();
@@ -274,7 +280,7 @@ public class Window implements Comparable<Window> {
     }
 
     public String toTSV(String sample) {
-        return sequenceName + "\t" + start + "\t" + end + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
+        return getWindowId() + "\t" + sequenceName + "\t" + start + "\t" + end + "\t" + getEffLength() + "\t" + totalKmers + "\t" + data.get(sample).toTSV();
     }
 
     public void setEffLength(int atgcCount) {

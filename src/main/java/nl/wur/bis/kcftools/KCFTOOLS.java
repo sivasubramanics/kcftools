@@ -18,11 +18,12 @@ import java.util.Locale;
                 FindIBS.class,
                 SplitKCF.class,
                 GetAttributes.class,
-                KCFToMatrix.class,
                 KCFToTSV.class,
-                CompareIBS.class,
+//                CompareIBS.class,
                 IncreaseWindows.class,
                 KCFToPed.class,
+                ScoreRecalc.class,
+                KCFToGenotypeTable.class
         })
 public class KCFTOOLS {
     public static void main(String[] args) {

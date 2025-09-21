@@ -1,5 +1,6 @@
 package nl.wur.bis.kcftools.Data;
 
+import nl.wur.bis.kcftools.Utils.Logger;
 /**
  * Data class to store the data for each window
  * observedKmers: number of kmers observed in the window
@@ -20,6 +21,8 @@ public class Data{
     int ibs;
     int leftDistance;
     int rightDistance;
+
+    private final String CLASS_NAME = this.getClass().getSimpleName();
 
     public Data(int observedKmers,
                 int variations,
@@ -63,14 +66,17 @@ public class Data{
      * Compute the score of the window
      */
     public double computeScore(int totalKmers, int effLength, double[] weights){
-        if ((observedKmers == 0) || (totalKmers == 0) || (effLength == 0)){
+        if ((getObservedKmers() == 0) || (totalKmers == 0) || (effLength == 0)){
             return 0;
         }
 //        old method of scoring
 //        return (float) (observedKmers - variations) * 100 / totalKmers;
-        return ((weights[2] * ((double) observedKmers / totalKmers))
-                + (weights[0] * (1.0f - ((double) innerDistance / effLength)))
-                + (weights[1] * (1.0f - ((double) tailDistance / effLength)))) * 100.0f;
+        if (weights[0] + weights[1] + weights[2] != 1.0){
+            Logger.error(CLASS_NAME, "Weights should sum to 1.0");
+        }
+        return ((weights[2] * ((double) getObservedKmers() / totalKmers))
+                + (weights[0] * (1.0f - ((double) getInnerDistance() / effLength)))
+                + (weights[1] * (1.0f - ((double) getTailDistance() / effLength)))) * 100.0f;
     }
 
     /***
@@ -96,7 +102,9 @@ public class Data{
      * Get TSV formated string representation of the data (to write in native IBSpy table format)
      */
     public String toTSV() {
-        return getObservedKmers() + "\t" + getVariations() + "\t" + getInnerDistance() + getTailDistance();
+        int distance = getInnerDistance() + getTailDistance();
+        double score = getScore();
+        return getObservedKmers() + "\t" + getVariations() + "\t" + distance + "\t" + String.format("%.2f", score);
     }
 
     /***

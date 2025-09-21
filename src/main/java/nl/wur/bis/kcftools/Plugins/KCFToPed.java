@@ -24,6 +24,8 @@ public class KCFToPed implements Runnable, Callable<Integer> {
     private double scoreA = 95.0;
     @Option(names = {"-b", "--score_b"}, description = "Lower score cut-off for alternate allele", required = false)
     private double scoreB = 60.0;
+    @Option(names = {"--score_n"}, description = "Score value for missing data (default = 30.0)", required = false)
+    private double scoreN = 30.0;
     @Option(names = {"--chrs"}, description = "List file with chromosomes to include", required = false)
     private String chrsFile = null;
     @Option(names = {"--maf"}, description = "Minimum allele frequency to consider a window valid", required = false)
@@ -98,16 +100,16 @@ public class KCFToPed implements Runnable, Callable<Integer> {
                     double score = window.getData().get(samples[j]).getScore();
                     if (score >= scoreA) {
                         matrix[j][i] = 0;
-                        alleles[j] = 0;
+                        alleles[j] = 0; // reference allele 100-scoreA
                     } else if (score >= scoreB) {
                         matrix[j][i] = 2;
-                        alleles[j] = 2;
-                    } else if (score == 0) {
+                        alleles[j] = 2; // alternate allele scoreB-scoreA
+                    } else if (score <= scoreN) {
                         matrix[j][i] = -1;
-                        alleles[j] = -1; // missing data
+                        alleles[j] = -1; // missing data 0-scoreN
                     } else {
-                        matrix[j][i] = -1; // missing data
-                        alleles[j] = -1; // missing data
+                        matrix[j][i] = 1;
+                        alleles[j] = 1; // heterozygous scoreN-scoreB
                     }
                 }
                 if (chrs != null && !chrs.contains(window.getSequenceName())) {

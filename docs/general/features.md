@@ -19,10 +19,10 @@ KCFTOOLS provides a comprehensive set of features for genomic analysis, leveragi
 - Facilitates cohort-level analyses by aggregating variations across multiple samples.
 - Maintains the number of windows and reference sequence information for each sample.
 
-#### [**kcfToMatrix**](../usage/kcfToMatrix.md)
+#### [**kcf2gt**](../usage/kcf2gt.md)
 - Converts a KCF file into a genotype matrix format.
-- Outputs a matrix where rows represent samples and columns represent allele codes (0, 1, 2).
-- Outputs a map file that maps the window IDs to their respective positions in the reference genome.
+- Outputs a matrix where rows represent samples and columns represent allele codes (0, 1, 2, -1).
+- Outputs a map file that maps the numeric number to their respective reference contig/chromosome name.
 - The output files are suitable for further analyses in tools like [PLINK](https://www.cog-genomics.org/plink/), [Tassel](https://www.maizegenetics.net/tassel) or [GAPIT](https://zzlab.net/GAPIT/)
 - Supports options for filtering based on allele frequency and minimum missing data.
 
@@ -47,3 +47,15 @@ KCFTOOLS provides a comprehensive set of features for genomic analysis, leveragi
 - Supports options for adjusting the effective length and identity score calculations based on the new window size.
 - Allows for re-evaluation of variations with the new window size, potentially avoiding the need to re-run the `getVariations` command.
 - Outputs a new KCF file with the adjusted window size and recalculated identity scores.
+
+#### [**scoreRecalc**](../usage/scoreRecalc.md)
+- Recalculates identity scores in a KCF file based on updated weights.
+- Allows for dynamic adjustment of scoring criteria without re-running the entire variation detection process.
+
+#### [**kcf2plink**](../usage/kcf2plink.md)
+- Converts a KCF file into PLINK format files (.ped and .map).
+- Facilitates the use of KCF data in PLINK for further genetic analyses.
+- Supports options for filtering based on allele frequency and missing data.
+- Outputs files that are compatible with PLINK
+
+

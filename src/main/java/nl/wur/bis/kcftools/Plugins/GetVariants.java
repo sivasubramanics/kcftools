@@ -56,12 +56,15 @@ public class GetVariants implements Callable<Integer>, Runnable {
     // minimum kmer count to consider a kmer as valid
     @Option(names = {"-c", "--min-k-count"}, description = "Minimum kmer count to consider [1]", required = false)
     private int minKmerCount = 1;
+    // step size for sliding window
+    @Option(names = {"-p", "--step"}, description = "Step size for sliding window [window size]", required = false)
+    private int stepSize = 0;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
     private FastaIndex index;
     private int kmerSize;
     private GTF gtf;
-    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
+//    private final double[] weights = new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
 
     public GetVariants() {
     }
@@ -95,6 +98,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         header.addCommandLine(HelperFunctions.getCommandLine());
         header.addSample(sampleName);
         header.setWindowSize(windowSize);
+        header.setStepSize(stepSize);
         header.setKmerSize(kmc.getKmerLength());
         header.setIBS(false);
         header.setWeightInnerDist(innerDistanceWeight);
@@ -247,7 +251,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", weights);
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", getWeights());
         }
 
         return window;
@@ -273,15 +277,46 @@ public class GetVariants implements Callable<Integer>, Runnable {
         int sequenceLength = index.getSequenceLength(sequenceName);
         switch (featureType) {
             case "window" -> {
-                int lastEnd = 0;
-                while (lastEnd < sequenceLength) {
-                    int start = Math.max(0, lastEnd - kmerSize + 1);
-                    int end = Math.min(start + windowSize, sequenceLength);
-                    if (end - start >= kmerSize) {
-                        windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
+//                int lastEnd = 0;
+//                while (lastEnd < sequenceLength) {
+//                    int start = Math.max(0, lastEnd - kmerSize + 1);
+//                    int end = Math.min(start + windowSize, sequenceLength);
+//                    if (end - start >= kmerSize) {
+//                        windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
+//                    }
+//                    lastEnd = end;
+//                }
+
+                int lastPos = 0;
+
+                if (stepSize > 0) {
+                    // Sliding window mode
+                    while (lastPos < sequenceLength) {
+                        int start = lastPos;
+                        int end = Math.min(start + windowSize, sequenceLength);
+
+                        if (end - start >= kmerSize) {
+                            windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
+                        }
+
+                        lastPos += stepSize; // slide by stepSize
                     }
-                    lastEnd = end;
+                } else {
+                    // Old tiling mode (non-overlapping but with kmer overlap at boundary)
+                    int lastEnd = 0;
+                    while (lastEnd < sequenceLength) {
+                        int start = Math.max(0, lastEnd - kmerSize + 1);
+                        int end = Math.min(start + windowSize, sequenceLength);
+
+                        if (end - start >= kmerSize) {
+                            windows.add(new Window(sequenceName + "_" + start, sequenceName, start, end));
+                        }
+
+                        lastEnd = end;
+                    }
                 }
+
+
             }
             case "gene" -> {
                 String[] genes = gtf.getGenes(sequenceName);
@@ -341,6 +376,14 @@ public class GetVariants implements Callable<Integer>, Runnable {
         if (nThreads <= 0) {
             Logger.error(CLASS_NAME, "Number of threads should be greater than 0");
         }
+
+        if (minKmerCount < 1) {
+            Logger.error(CLASS_NAME, "Minimum kmer count should be at least 1");
+        }
+    }
+
+    private double[] getWeights(){
+        return new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
     }
 }
 //EOF

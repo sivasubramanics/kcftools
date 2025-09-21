@@ -78,6 +78,10 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
         KCFReader reader = new KCFReader(inFile);
         KCFHeader header = reader.getHeader();
+        if (header.getStepSize() > 0){
+            minConsecutive = header.getWindowSize() / header.getStepSize();
+            Logger.warning(CLASS_NAME, "Input KCF file is created with step size. Hence we are using the --min = windowSize/stepSize [" + minConsecutive + "]");
+        }
         HashMap<String, Integer> windowsCount = new HashMap<>();
         HashMap<String, ArrayList<Window>> windowsList = new HashMap<>();
         for (Window window: reader) {
@@ -136,13 +140,13 @@ public class FindIBS implements Callable<Integer>, Runnable {
                     }
 
                     score = window.getScore(sample);
-                    isIBSRegion = detectVar ? (score < 85 && score >= 60 ) : score >= scoreCutOff;
+                    isIBSRegion = detectVar ? score < scoreCutOff  : score >= scoreCutOff;
 
                     if (isIBSRegion) {
                         if (!firstIBSFound) {
                             blockNum = 1;
                             firstIBSFound = true;
-                        } else if (numNA >= minConsecutive || (blockChrom != null && !blockChrom.equals(chromName))) {
+                        } else if (numNA > minConsecutive || (blockChrom != null && !blockChrom.equals(chromName))) {
                             blockNum++;
                         }
                         blockChrom = chromName;

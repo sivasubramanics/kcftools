@@ -24,8 +24,8 @@ public class KCFHeader implements Comparable<KCFHeader> {
     private final String formatLines;
     private List<String> commandLines;
     private String[] samples;
-    // window, kmer, IBS, numWindow, weightInnerDistance, weightTailDistance, weightKmerRatio as parameters in the order
-    private final Pair[] params = new Pair[7];
+    // window [0], step [1], kmer [2], IBS [3], numWindow [4], weightInnerDistance [5], weightTailDistance [6], weightKmerRatio [7] as parameters in the order
+    private final Pair[] params = new Pair[8];
 
     public KCFHeader(){
         this.version = Configs.KCF_VERSION.getValue();
@@ -77,23 +77,26 @@ public class KCFHeader implements Comparable<KCFHeader> {
                     case "window":
                         params[0] = param;
                         break;
-                    case "kmer":
+                    case "step":
                         params[1] = param;
                         break;
-                    case "IBS":
+                    case "kmer":
                         params[2] = param;
                         break;
-                    case "nwindow":
+                    case "IBS":
                         params[3] = param;
                         break;
-                    case "wti":
+                    case "nwindow":
                         params[4] = param;
                         break;
-                    case "wtt":
+                    case "wti":
                         params[5] = param;
                         break;
-                    case "wtk":
+                    case "wtt":
                         params[6] = param;
+                        break;
+                    case "wtk":
+                        params[7] = param;
                         break;
                 }
             }
@@ -133,80 +136,88 @@ public class KCFHeader implements Comparable<KCFHeader> {
      * Get Weight for obs/total kmers
      */
     public double getWeightKmerRatio(){
-        return this.params[6] != null ? Double.parseDouble(this.params[6].getValue()) : 0.0;
+        return this.params[7] != null ? Double.parseDouble(this.params[7].getValue()) : 0.0;
     }
 
     /***
      * Set Weight for obs/total kmers
      */
     public void setWeightKmerRatio(double wtk){
-        this.params[6] = new Pair("wtk", String.valueOf(wtk));
+        this.params[7] = new Pair("wtk", String.valueOf(wtk));
     }
 
     /***
      * Get Weight for tail distance
      */
     public double getWeightTailDist(){
-        return this.params[5] != null ? Double.parseDouble(this.params[5].getValue()) : 0.0;
+        return this.params[6] != null ? Double.parseDouble(this.params[6].getValue()) : 0.0;
     }
 
     /***
      * Set Weight for tail distance
      */
     public void setWeightTailDist(double wtt){
-        this.params[5] = new Pair("wtt", String.valueOf(wtt));
+        this.params[6] = new Pair("wtt", String.valueOf(wtt));
     }
 
     /***
      * Get Weight for inner distance
      */
     public double getWeightInnerDist(){
-        return this.params[4] != null ? Double.parseDouble(this.params[4].getValue()) : 0.0;
+        return this.params[5] != null ? Double.parseDouble(this.params[5].getValue()) : 0.0;
     }
 
     /***
      * Set Weight for inner distance
      */
     public void setWeightInnerDist(double wti){
-        this.params[4] = new Pair("wti", String.valueOf(wti));
+        this.params[5] = new Pair("wti", String.valueOf(wti));
     }
 
     /***
      * Get the number of windows
      */
     public int getWindowCount(){
-        return this.params[3] != null ? Integer.parseInt(this.params[3].getValue()) : 0;
+        return this.params[4] != null ? Integer.parseInt(this.params[4].getValue()) : 0;
     }
 
     /***
      * Set the number of windows (this is important for the IBS processing)
      */
     public void setWindowCount(int nunWindow){
-        this.params[3] = new Pair("nwindow", String.valueOf(nunWindow));
+        this.params[4] = new Pair("nwindow", String.valueOf(nunWindow));
     }
 
     public boolean isIBS(){
-        return this.params[2] != null && Boolean.parseBoolean(this.params[2].getValue());
+        return this.params[3] != null && Boolean.parseBoolean(this.params[3].getValue());
     }
 
     public void setIBS(boolean isIBS){
-        this.params[2] = new Pair("IBS", String.valueOf(isIBS));
+        this.params[3] = new Pair("IBS", String.valueOf(isIBS));
     }
 
     public int getWindowSize(){
         return this.params[0] != null ? Integer.parseInt(this.params[0].getValue()) : 0;
     }
 
-    public int getKmerSize(){
+    public int getStepSize(){
         return this.params[1] != null ? Integer.parseInt(this.params[1].getValue()) : 0;
+    }
+
+    public int getKmerSize(){
+        return this.params[2] != null ? Integer.parseInt(this.params[2].getValue()) : 0;
     }
 
     public void setWindowSize(int windowSize){
         this.params[0] = new Pair("window", String.valueOf(windowSize));
     }
 
+    public void setStepSize(int stepSize) {
+        this.params[1] = new Pair("step", String.valueOf(stepSize));
+    }
+
     public void setKmerSize(int kmerSize){
-        this.params[1] = new Pair("kmer", String.valueOf(kmerSize));
+        this.params[2] = new Pair("kmer", String.valueOf(kmerSize));
     }
 
     public String[] getSamples(){
@@ -355,6 +366,10 @@ public class KCFHeader implements Comparable<KCFHeader> {
         }
         if (getWeightKmerRatio() != kcfHeader.getWeightKmerRatio()) {
             Logger.error(CLASSNAME, "Weight Kmer Ratio mismatch between the KCFs");
+            return false;
+        }
+        if (getStepSize() != kcfHeader.getStepSize()) {
+            Logger.error(CLASSNAME, "Step size mismatch between the KCFs");
             return false;
         }
         return true;
