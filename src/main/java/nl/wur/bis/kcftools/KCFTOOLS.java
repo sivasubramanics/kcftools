@@ -2,6 +2,7 @@ package nl.wur.bis.kcftools;
 
 import nl.wur.bis.kcftools.Plugins.*;
 import nl.wur.bis.kcftools.Utils.Logger;
+import nl.wur.bis.kcftools.Utils.Configs;
 import picocli.CommandLine;
 import picocli.CommandLine.*;
 
@@ -11,7 +12,7 @@ import java.util.Locale;
  * This is the main class for the KCFTOOLS tool
  */
 @Command(name = "kcftools", description = "Tools to handle kmer counting based variations.",
-        mixinStandardHelpOptions = true, version = "kcftools 0.1.0",
+        mixinStandardHelpOptions = true, versionProvider = Configs.VersionProvider.class,
         subcommands = {
                 GetVariants.class,
                 Cohort.class,
@@ -65,5 +66,4 @@ public class KCFTOOLS {
         System.exit(exitCode);
     }
 }
-
-
+//EOF
