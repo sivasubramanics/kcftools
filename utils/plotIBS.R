@@ -1,152 +1,210 @@
 #!/usr/bin/env Rscript
-# set default mirror
-options(repos = c(CRAN = "https://cloud.r-project.org"))
+# Script: plotIBS.R
+# Description: Plot IBS windows is chromosome wise rect plot
+# Author: c.s.sivsubramani@gmail.com
+# Date: 2025-09-23
 
-# check if packages ggplot2, dplyr, ggforce are installed, if not install them and load them silently
-if (!requireNamespace("ggplot2", quietly = TRUE)) {
-  install.packages("ggplot2")
-}
-if (!requireNamespace("dplyr", quietly = TRUE)) {
-  install.packages("dplyr")
-}
-if (!requireNamespace("ggforce", quietly = TRUE)) {
-  install.packages("ggforce")
-}
+suppressPackageStartupMessages({
+  library(optparse)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggh4x)
+})
 
-
-# user input and usage message plotIBS.R <reference.fna.fai> <ibs.summary.tsv> [var]
-args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 4) {
-  cat("Usage: plotIBS.R <reference.fna.fai> <ibs.summary.tsv> <chr_name> <out_file>")
-  quit(status = 1)
-}
-
-fai <- args[1]
-ibs <- args[2]
-chr_name <- args[3]
-out <- args[4]
-
-# fai <- "/Users/selva001/projects/work/wp4/kcftools/gene_test/genome.fna.fai"
-# ibs <- "/Users/selva001/projects/work/wp4/kcftools/gene_test/LK085_lsatv11.window50kb.ibs.summary.tsv"
-# out <- "/Users/selva001/projects/work/wp4/kcftools/gene_test/LK085_lsatv11.window50kb.ibs.chr1.png"
-# chr_name <- "NC_056628.2"
-# chr_name <- "OX465082.1"
-
-suppressMessages(library(ggplot2))
-suppressMessages(library(dplyr))
-suppressMessages(library(ggforce))
-
-# Read fai file
-fai <- read.table(fai, header = FALSE, sep = "\t", stringsAsFactors = FALSE)[, 1:2]
-fai <- fai %>% 
-  setNames(c("seqname", "seqlen")) %>%
-  filter(seqname == chr_name) %>% 
-  mutate(seqlen = seqlen / 1e6)
-
-# Read ibs file
-ibs <- read.table(ibs, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-ibs <- ibs %>% 
-  filter(Chromosome == chr_name) %>%
-  mutate(Start = Start / 1e6, End = End / 1e6, Length = Length / 1e6)
-
-# Convert MeanScore to numeric (replace commas with dots)
-ibs$MeanScore <- as.numeric(gsub(",", ".", ibs$MeanScore))
-
-# Get unique samples
-samples <- unique(ibs$Sample)
-
-# Add sample positions for stacking
-ibs <- ibs %>%
-  mutate(SamplePosition = as.numeric(factor(Sample)))
-
-# Create a data frame for the full chromosome length rectangles
-sample_backgrounds <- data.frame(
-  Sample = samples,
-  SamplePosition = as.numeric(factor(samples)),
-  Start = 0,
-  End = fai$seqlen
+# ── Command line options ──
+option_list <- list(
+  make_option(c("-c", "--chrinfo"), type="character", help="Chromosome metadata file"),
+  make_option(c("-i", "--ibs"), type="character", help="Space-separated list of IBS summary files"),
+  make_option(c("-o", "--output"), type="character", help="Output PDF file"),
+  make_option(c("-g", "--groups"), type="character", default=NULL,
+              help="Optional sample-to-group TSV file"),
+  make_option(c("-m", "--minlen"), type="numeric", default=1e6,
+              help="Minimum length of IBS regions to plot (default: 1e6)")
 )
 
-bandwidth <- 0.3
-# Create the plot
+opt <- parse_args(OptionParser(option_list=option_list))
+
+if (is.null(opt$chrinfo) || is.null(opt$ibs) || is.null(opt$output)) {
+  print_help(OptionParser(option_list=option_list))
+  stop("Missing required arguments.", call.=FALSE)
+}
+
+# Split multiple IBS files
+ibs_files <- strsplit(opt$ibs, "\\s+")[[1]] %>%
+  map(~ Sys.glob(.x)) %>%
+  unlist()
+
+
+# ── Functions ──
+parse_chr_meta <- function(chr_meta_file) {
+  read.table(chr_meta_file, header = FALSE, sep = "\t") %>%
+    setNames(c("chrom_name", "len", "chrom_num", "cum_len")) %>%
+    mutate(
+      chrom_num = as.numeric(chrom_num),
+      chr_start = cum_len - len,
+      chr_end = cum_len,
+      mid = cum_len - (len / 2)
+    )
+}
+
+# ── Load data ──
+chrinfo <- parse_chr_meta(opt$chrinfo)
+
+ibs <- map_dfr(ibs_files, read_tsv, show_col_types = FALSE) %>%
+  filter(Chromosome %in% chrinfo$chrom_name) %>%
+  filter(Length >= opt$minlen)
+
+write.table(ibs, file=sub(".pdf$", ".filtered.tsv", opt$output), sep="\t", quote=FALSE, row.names=FALSE)
+
+# ── Sample positions ──
+samples <- sort(unique(ibs$Sample))
+sample_positions <- tibble(Sample = samples, SamplePosition = seq_along(samples))
+
+# If grouping is provided
+if (!is.null(opt$groups)) {
+  groups <- read_tsv(opt$groups, col_names = c("Sample","Group"), show_col_types = FALSE) %>%
+    mutate(Group = factor(Group, levels = unique(Group)))
+  sample_positions <- sample_positions %>%
+    left_join(groups, by="Sample") %>%
+    arrange(Group, Sample) %>%
+    mutate(SamplePosition = row_number())
+} else {
+  groups <- NULL
+}
+
+ibs_plot <- ibs %>%
+  left_join(sample_positions, by="Sample")
+
+chrom_levels <- chrinfo$chrom_name
+
+sample_backgrounds <- expand_grid(
+  Sample = unique(ibs$Sample),
+  Chromosome = chrom_levels
+) %>%
+  left_join(sample_positions, by="Sample") %>%
+  left_join(chrinfo %>% select(chrom_name, len),
+            by = c("Chromosome" = "chrom_name")) %>%
+  mutate(Start = 0, End = len,
+         Chromosome = factor(Chromosome, levels=chrom_levels))
+
+ibs_plot <- ibs_plot %>%
+  mutate(Chromosome = factor(Chromosome, levels=chrom_levels))
+
+# ── Calculate group separators ──
+group_separators <- NULL
+if (!is.null(groups)) {
+  group_boundaries <- sample_positions %>%
+    group_by(Group) %>%
+    summarise(
+      group_start = min(SamplePosition),
+      group_end = max(SamplePosition),
+      .groups = "drop"
+    ) %>%
+    arrange(group_start)
+
+  # Create separator lines between groups (exclude the last group)
+  if (nrow(group_boundaries) > 1) {
+    group_separators <- group_boundaries[-nrow(group_boundaries), ] %>%
+      mutate(separator_y = group_end + 0.5) %>%
+      select(separator_y)
+  }
+}
+
+# ── Plot ──
+bandwidth <- 0.4
+
 p <- ggplot() +
-  # Add chromosome-wide rectangles for each sample
   geom_rect(
     data = sample_backgrounds,
-    aes(
-      xmin = Start,
-      xmax = End,
-      ymin = SamplePosition - bandwidth,
-      ymax = SamplePosition + bandwidth
-    ),
-    fill = "grey90",
-    color = NA
+    aes(xmin = Start/1e6, xmax = End/1e6,
+        ymin = SamplePosition - bandwidth,
+        ymax = SamplePosition + bandwidth),
+    fill = "grey99", color = NA
   ) +
-  
-  # Add IBS regions for each sample with fill based on MeanScore
   geom_rect(
-    data = ibs,
-    aes(
-      xmin = Start,
-      xmax = End,
-      ymin = SamplePosition - bandwidth,
-      ymax = SamplePosition + bandwidth,
-      fill = MeanScore
-    ),
+    data = ibs_plot,
+    aes(xmin = Start/1e6, xmax = End/1e6,
+        ymin = SamplePosition - bandwidth,
+        ymax = SamplePosition + bandwidth,
+        fill = MeanScore),
     color = NA
   ) +
-  
-  # Customize color scale for MeanScore
-  # scale_fill_gradient(low = "yellow", high = "red", name = "Mean Score") +
   scale_fill_gradient(
-    low = "yellow",
-    high = "red",
-    name = "Mean Score",
-    limits = c(0, 100),
+    low = "white", high = "#8B0000",
+    name = "Mean Score", limits = c(0,100),
     oob = scales::squish
   ) +
-  
-  # Set axis labels and scales
   scale_y_continuous(
-    breaks = sample_backgrounds$SamplePosition,
-    labels = sample_backgrounds$Sample,
-    expand = c(0.02, 0.02)
+    name = NULL,
+    breaks = sample_positions$SamplePosition,
+    labels = sample_positions$Sample,
+    expand = c(0.01, 0.01),
+    sec.axis = if (!is.null(groups)) {
+      dup_axis(
+        breaks = sample_positions %>%
+          group_by(Group) %>%
+          summarise(mid = mean(SamplePosition)) %>%
+          pull(mid),
+        labels = sample_positions %>%
+          group_by(Group) %>%
+          summarise(mid = mean(SamplePosition)) %>%
+          pull(Group),
+        name = NULL
+      )
+    } else waiver()
   ) +
-  
-  # Axis and title customization
-  labs(
-    x = "Position (Mb)",
-    y = "Samples",
-    title = paste("IBS Regions on Chromosome", chr_name)
+  scale_x_continuous(
+    name = "Position (Mb)",
+    breaks = seq(0, max(chrinfo$len, na.rm=TRUE)/1e6, by=50),
+    labels = function(x) round(x, 0),
+    expand = c(0.01, 0.01)
   ) +
-  
-  # Custom theme and appearance
+  # ggh4x::facet_nested(. ~ Chromosome, scales="free_x", space="free_x", switch="y") +
+  ggh4x::facet_nested(
+    . ~ Chromosome,
+    scales = "free_x",
+    space = "free_x",
+    switch = "y",
+  ) +
+  theme_minimal(base_size = 12) +
   theme(
-    # plot title in the middle
-    plot.title = element_text(hjust = 0.5, size = 24, face = "bold", color = "black"),
-    panel.background = element_rect(fill = "transparent", colour = NA), # Transparent background for the plot
-    plot.background = element_rect(fill = "transparent", colour = NA), # Transparent overall background
-    panel.grid.major = element_blank(),  # Remove major grid lines
-    panel.grid.minor = element_blank(),  # Remove minor grid lines
-    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 8, face = "bold", color = "black"),  # X axis labels
-    axis.text.y = element_text(size = 24, face = "bold", color = "black"),  # Y axis labels
-    axis.title.x = element_text(size = 30, face = "bold", color = "black"),  # X axis title
-    axis.title.y = element_text(size = 30, face = "bold", color = "black"),  # Y axis title
-    axis.line.x = element_line(color = "black", linewidth = 0.5),  # X axis line color
-    axis.line.y = element_line(color = "black", linewidth = 0.5),  # Y axis line color
-    axis.ticks = element_line(color = "black", linewidth = 0.5),  # Axis ticks color and size
-    axis.ticks.length = unit(0.2, "cm"),  # Axis tick length
-    legend.position = "bottom",  # Place legend at the bottom
-    legend.text = element_text(size = 12, vjust = 0.5),  # Legend text size and alignment
-    legend.title = element_text(size = 16, face = "bold"),  # Legend title styling
-    legend.key.size = unit(1, "cm"),  # Size of legend keys
-    legend.background = element_rect(fill = NA),  # Transparent legend background
-    legend.box.background = element_rect(fill = NA, color = "black"),  # Border around legend box
-    plot.margin = margin(10, 10, 10, 10)  # Add some margin around the plot
+    panel.grid = element_blank(),
+    strip.background = element_blank(),
+    strip.placement = "outside",
+    strip.text = element_text(size = 48, face="bold"),
+    axis.text.y = element_text(size = 14, face="bold", color="black"),
+    axis.text.y.right = element_text(size = 48, face = "bold", color = "black", hjust = 0),
+    # axis.text.x = element_text(size = 8, face="bold", angle=90, hjust=1),
+    axis.text.x = element_text(size = 24, face="bold", hjust=1),
+    axis.title.x = element_text(size = 48, face="bold", margin=margin(t=10)),
+    axis.ticks = element_line(color="black"),
+    axis.line = element_line(color="black"),
+    panel.spacing.x = unit(0.6,"lines"),
+    panel.spacing.y = unit(0.6,"lines"),
+    panel.border = element_rect(color="black", fill=NA, linewidth=2.4),
+    legend.position = "none",
+    # legend.position = "bottom",
+    # legend.title = element_text(size=12, face="bold"),
+    # legend.text = element_text(size=10),
+    # legend.key.size = unit(0.8,"cm"),
+    plot.margin = margin(10,10,10,10)
   )
 
-# plot_height <- (2 * nrow(sample_backgrounds))+1
-plot_height <- min((2 * nrow(sample_backgrounds)) + 1, 49)
-ggsave(out, p, height = plot_height, width = 24, dpi = 300)
- 
+# Add group separator lines if groups are provided
+if (!is.null(group_separators) && nrow(group_separators) > 0) {
+  p <- p + geom_hline(
+    data = group_separators,
+    aes(yintercept = separator_y),
+    color = "black",
+    linewidth = 0.8  # Same thickness as panel border
+  )
+}
 
+# ── Auto dimensions ──
+n_samples <- length(unique(sample_positions$Sample))
+n_chr <- length(chrom_levels)
+
+plot_height <- max(2.3, (n_samples * 0.2) + 2)
+plot_width  <- max(6, (n_chr * 4) + (n_samples * 0.2))  # add width scaling with samples
+
+ggsave(opt$output, plot = p, width = plot_width, height = plot_height, dpi = 300, limitsize = FALSE)
