@@ -145,6 +145,7 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
         int[] id = new int[headerSamples.length];
         int[] ld = new int[headerSamples.length];
         int[] rd = new int[headerSamples.length];
+        long[] kt = new long[headerSamples.length];
 
         boolean singleWindow = (totalWindows == 1);
         int winIndex = 0;
@@ -172,6 +173,7 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
 
                 ob[i] += data.getObservedKmers();
                 id[i] += data.getInnerDistance();
+                kt[i] += data.getMeanKmerCount() * data.getObservedKmers();
 
                 if (singleWindow) {
                     ld[i] += left;
@@ -201,6 +203,7 @@ public class IncreaseWindows implements Runnable, Callable<Integer> {
                 id[i],
                 ld[i],
                 rd[i],
+                kt[i],
                 "N",
                 weights
             );

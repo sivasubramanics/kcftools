@@ -29,6 +29,7 @@ This can be used to perform statistical analyses, generate custom plots, or insp
 |--------------------------------|------------------------------------------------------|------|
 | `-i`, `--input=<kcfFile>`      | Input KCF file from which to extract attributes      | Yes |
 | `-o`, `--output=<outFile>`     | Output file **prefix** for saving extracted results  | Yes |
+| `-a`, `--attributes=<attrList>` | Comma-separated list of specific attributes to extract (default: all) | No |
 
 ---
 

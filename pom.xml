@@ -5,7 +5,7 @@
 
 	<groupId>nl.wur.bis</groupId>
 	<artifactId>kcftools</artifactId>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 	<packaging>jar</packaging>
 	<name>kcftools</name>
 	<description>Tools to handle k-mer count-based variants</description>

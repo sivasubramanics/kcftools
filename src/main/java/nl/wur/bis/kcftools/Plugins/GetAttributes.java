@@ -7,38 +7,63 @@ import nl.wur.bis.kcftools.Utils.Logger;
 import picocli.CommandLine.*;
 
 import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /***
- * This is a command line plugin that may extract attributes from the KCF files and write them to a TSV file
- * Attributes are:
- * 1. Number of observed kmers
- * 2. Number of variations
- * 3. Score
- * output file will be a TSV file with prefix.obs.tsv, prefix.var.tsv, prefix.score.tsv
- * The output files will have the following columns:
- * 1. window_id, sample1, sample2, ..., sampleN
+ * Command-line plugin to extract attributes from KCF files and write them to TSV files.
+ * Supported attributes:
+ *   - obs        : observed kmers
+ *   - var        : variations
+ *   - kd         : mean kmer count
+ *   - score      : score
+ *   - totalkmers : total kmers per window
+ *   - winlen     : effective window length
+ *   - inDist     : inner distance
+ *   - tailDist   : tail distance
+ *sdfasdd
+ * Example:
+ *   kcftools getAttributes -i input.kcf -o outPrefix -a obs var score
+ *   kcftools getAttributes -i input.kcf -o outPrefix   (extracts all attributes)
  */
 @Command(name = "getAttributes", description = "Extract attributes from KCF files")
 public class GetAttributes implements Callable<Integer>, Runnable {
+
     @Option(names = {"-i", "--input"}, description = "KCF file name", required = true)
     private String kcfFile;
+
     @Option(names = {"-o", "--output"}, description = "Output file name prefix", required = true)
     private String outFile;
 
+    @Option(
+            names = {"-a", "--attributes"},
+            split = ",",
+            description = {
+                    "Attributes to extract. Default: all",
+                    "  - obs        : observed kmers",
+                    "  - var        : variations",
+                    "  - kd         : mean kmer count",
+                    "  - score      : score",
+                    "  - totalkmers : total kmers per window",
+                    "  - winlen     : effective window length",
+                    "  - inDist     : inner distance",
+                    "  - tailDist   : tail distance"
+            }
+    )
+    private List<String> attributes;
+
+
     private final String CLASS_NAME = this.getClass().getSimpleName();
 
-    public GetAttributes() {
-    }
-
-    public GetAttributes(String kcfFile, String outFile) {
-        this.kcfFile = kcfFile;
-        this.outFile = outFile;
-    }
+    // Define all available attributes once
+    private static final List<String> ALL_ATTRIBUTES = Arrays.asList(
+            "obs", "var", "kd", "score", "totalkmers", "winlen", "inDist", "tailDist"
+    );
 
     @Override
     public Integer call() throws Exception {
-        getAttributes();
+        extractAttributes();
         return 0;
     }
 
@@ -52,69 +77,108 @@ public class GetAttributes implements Callable<Integer>, Runnable {
     }
 
     /***
-     * Main method to extract attributes from KCF file
+     * Extract selected attributes and write to TSV.
      */
-    private void getAttributes() {
-        int[][] observedKmers;
-        try (KCFReader reader = new KCFReader(kcfFile);
-                BufferedWriter obsWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".obs.tsv"));
-                BufferedWriter varWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".var.tsv"));
-                BufferedWriter scoreWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".score.tsv"));
-             BufferedWriter totWriter = new BufferedWriter(new java.io.FileWriter(outFile + ".totalkmers.tsv"));
-             BufferedWriter winlen = new BufferedWriter(new java.io.FileWriter(outFile + ".winlen.tsv"));
-             BufferedWriter inDist = new BufferedWriter(new java.io.FileWriter(outFile + ".inDist.tsv"));
-             BufferedWriter tailDist = new BufferedWriter(new java.io.FileWriter(outFile + ".tailDist.tsv"))) {
-            Logger.info(CLASS_NAME, "Reading KCF file: " + kcfFile);
+    private void extractAttributes() {
+        try (KCFReader reader = new KCFReader(kcfFile)) {
+
             KCFHeader header = reader.getHeader();
             String[] samples = header.getSamples();
-            int nWindows = header.getWindowCount();
-            obsWriter.write("window_id");
-            varWriter.write("window_id");
-            scoreWriter.write("window_id");
-            inDist.write("window_id");
-            tailDist.write("window_id");
-            totWriter.write("window_id" + "\t" + "total_kmers");
-            winlen.write("window_id" + "\t" + "window_length");
-            for (String sample: samples){
-                obsWriter.write("\t" + sample);
-                varWriter.write("\t" + sample);
-                scoreWriter.write("\t" + sample);
-                inDist.write("\t" + sample);
-                tailDist.write("\t" + sample);
-            }
-            obsWriter.newLine();
-            varWriter.newLine();
-            scoreWriter.newLine();
-            totWriter.newLine();
-            winlen.newLine();
-            inDist.newLine();
-            tailDist.newLine();
-            for (Window window: reader){
-                obsWriter.write(window.getWindowId());
-                varWriter.write(window.getWindowId());
-                scoreWriter.write(window.getWindowId());
-                inDist.write(window.getWindowId());
-                tailDist.write(window.getWindowId());
-                for (String sample : samples) {
-                    obsWriter.write("\t" + window.getObservedKmers(sample));
-                    varWriter.write("\t" + window.getVariations(sample));
-                    scoreWriter.write("\t" + String.format("%.2f", window.getScore(sample)));
-                    inDist.write("\t" + window.getInnerDistance(sample));
-                    tailDist.write("\t" + window.getTailDistance(sample));
+
+            // Default to all attributes if none were provided
+            List<String> attrsToExtract = (attributes == null || attributes.isEmpty())
+                    ? ALL_ATTRIBUTES
+                    : attributes;
+
+            Logger.info(CLASS_NAME, "Extracting attributes: " + String.join(", ", attrsToExtract));
+
+            // Prepare writers only for requested attributes
+            Map<String, BufferedWriter> writers = new HashMap<>();
+            for (String attr : attrsToExtract) {
+                if (!ALL_ATTRIBUTES.contains(attr)) {
+                    throw new IllegalArgumentException("Unsupported attribute: " + attr);
                 }
-                totWriter.write(window.getWindowId() + "\t" + window.getTotalKmers());
-                winlen.write(window.getWindowId() + "\t" + window.getEffLength());
-                obsWriter.newLine();
-                varWriter.newLine();
-                scoreWriter.newLine();
-                inDist.newLine();
-                tailDist.newLine();
-                totWriter.newLine();
-                winlen.newLine();
+                String filename = outFile + "." + attr + ".tsv";
+                writers.put(attr, new BufferedWriter(new FileWriter(filename)));
             }
+
+            // Write headers
+            for (Map.Entry<String, BufferedWriter> entry : writers.entrySet()) {
+                String attr = entry.getKey();
+                BufferedWriter w = entry.getValue();
+
+                if (attr.equals("totalkmers")) {
+                    w.write("window_id\ttotal_kmers");
+                } else if (attr.equals("winlen")) {
+                    w.write("window_id\twindow_length");
+                } else {
+                    w.write("window_id");
+                    for (String sample : samples) {
+                        w.write("\t" + sample);
+                    }
+                }
+                w.newLine();
+            }
+
+            // Write data per window
+            for (Window window : reader) {
+                for (Map.Entry<String, BufferedWriter> entry : writers.entrySet()) {
+                    String attr = entry.getKey();
+                    BufferedWriter w = entry.getValue();
+
+                    switch (attr) {
+                        case "obs":
+                            writeSampleValues(w, window.getWindowId(), samples, window::getObservedKmers);
+                            break;
+                        case "var":
+                            writeSampleValues(w, window.getWindowId(), samples, window::getVariations);
+                            break;
+                        case "kd":
+                            writeSampleValues(w, window.getWindowId(), samples,
+                                    s -> String.format("%.2f", window.getMeanKmerCount(s)));
+                            break;
+                        case "score":
+                            writeSampleValues(w, window.getWindowId(), samples,
+                                    s -> String.format("%.2f", window.getScore(s)));
+                            break;
+                        case "inDist":
+                            writeSampleValues(w, window.getWindowId(), samples, window::getInnerDistance);
+                            break;
+                        case "tailDist":
+                            writeSampleValues(w, window.getWindowId(), samples, window::getTailDistance);
+                            break;
+                        case "totalkmers":
+                            w.write(window.getWindowId() + "\t" + window.getTotalKmers());
+                            w.newLine();
+                            break;
+                        case "winlen":
+                            w.write(window.getWindowId() + "\t" + window.getEffLength());
+                            w.newLine();
+                            break;
+                    }
+                }
+            }
+
+            // Close writers
+            for (BufferedWriter w : writers.values()) {
+                w.close();
+            }
+
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error extracting attributes", e);
         }
     }
+
+    /***
+     * Helper to write values for each sample.
+     */
+    private void writeSampleValues(BufferedWriter w, String windowId,
+                                   String[] samples, java.util.function.Function<String, Object> getter) throws Exception {
+        w.write(windowId);
+        for (String sample : samples) {
+            w.write("\t" + getter.apply(sample));
+        }
+        w.newLine();
+    }
 }
-//EOF
+// EOF

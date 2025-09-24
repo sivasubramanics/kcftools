@@ -32,6 +32,7 @@ public enum Configs {
                     <ID=ID,Type=Integer,Description="Inner Distance">
                     <ID=LD,Type=Integer,Description="Kmer Variation Distance at the leftTail">
                     <ID=RD,Type=Integer,Description="Kmer Variation Distance at the rightTail">
+                    <ID=KD,Type=Float,Description="Mean Kmer Depth">
                     <ID=SC,Type=Float,Description="Score">"""
     );
 
