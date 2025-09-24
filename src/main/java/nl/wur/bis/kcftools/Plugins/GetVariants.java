@@ -91,6 +91,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
      */
     public void getVariations() throws IOException {
 
+        sampleName = cleanSampleName(sampleName);
         KMC kmc = new KMC(kmcDBprefix, loadMemory);
         kmerSize = kmc.getKmerLength();
         KCFHeader header = new KCFHeader();
@@ -386,6 +387,17 @@ public class GetVariants implements Callable<Integer>, Runnable {
 
     private double[] getWeights(){
         return new double[] {innerDistanceWeight, tailDistanceWeight, kmerRatioWeight};
+    }
+
+    private String cleanSampleName(String sampleName) {
+        // Replace invalid filename characters with '_'
+        String sanitized = sampleName.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+        if (!sanitized.equals(sampleName)) {
+            Logger.warning(CLASS_NAME,
+                    "Sample name contains invalid characters, changed to: " + sanitized);
+        }
+        return sanitized;
     }
 }
 //EOF
