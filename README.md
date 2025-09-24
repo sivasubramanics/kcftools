@@ -2,7 +2,7 @@
 [![GitHub all releases](https://img.shields.io/github/downloads/sivasubramanics/kcftools/total?style=social&logo=github&label=Download)](https://github.com/sivasubramanics/kcftools/releases)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/kcftools.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/kcftools)
 [![Release](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml/badge.svg)](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml)
-[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
 [![License: GPL v3.0 only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Docs](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://kcftools.readthedocs.io)
 <!--- badges: end --->
