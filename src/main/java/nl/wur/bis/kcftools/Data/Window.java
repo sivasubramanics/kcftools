@@ -29,7 +29,6 @@ public class Window implements Comparable<Window> {
     double maxScore;
     double meanScore;
 
-
     public Window(String windowId, String sequenceName, int start, int end){
         this.windowId = windowId;
         this.sequenceName = sequenceName;
@@ -40,19 +39,47 @@ public class Window implements Comparable<Window> {
         this.data = new LinkedHashMap<>();
     }
 
-    public Window(String[] fields, String[] samples, double[] weights){
-        this.windowId = fields[3];
+    public Window(String[] fields, String[] samples, double[] weights) {
         this.sequenceName = fields[0];
         this.start = Integer.parseInt(fields[1]);
         this.end = Integer.parseInt(fields[2]);
+        this.windowId = fields[3];
         this.totalKmers = Integer.parseInt(fields[4]);
         this.effLength = Integer.parseInt(getInfoFieldMap(fields[5]).get("EFFLEN"));
         this.data = new LinkedHashMap<>();
-        for (int i = 7; i < fields.length; i++){
-            String[] sampleData = fields[i].split(":");
-            // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:score
-            data.put(samples[i-7], new Data(Integer.parseInt(sampleData[2]), Integer.parseInt(sampleData[1]), Integer.parseInt(sampleData[3]), Integer.parseInt(sampleData[4]), Integer.parseInt(sampleData[5]), totalKmers, effLength, sampleData[0], weights));
+        for (int i = 7; i < fields.length; i++) {
+            String sampleName = samples[i - 7];
+            Data d = parseSampleData(fields[i], totalKmers, effLength, weights);
+            data.put(sampleName, d);
         }
+    }
+
+    private Data parseSampleData(String field,
+                                 int totalKmers,
+                                 int effLength,
+                                 double[] weights) {
+        // sampleData: ibs:variations:observedKmers:innerDistance:tailDistance:rightDistance:kmerCount:score
+        String[] sampleData = field.split(":");
+        String ibs = sampleData[0];
+        int variations = Integer.parseInt(sampleData[1]);
+        int observedKmers = Integer.parseInt(sampleData[2]);
+        int innerDistance = Integer.parseInt(sampleData[3]);
+        int leftDistance = Integer.parseInt(sampleData[4]);
+        int rightDistance = Integer.parseInt(sampleData[5]);
+        // Ensure kmerCount is a long, not double
+        long kmerCount = Math.round(Double.parseDouble(sampleData[6]) * observedKmers);
+        return new Data(
+                observedKmers,
+                variations,
+                innerDistance,
+                leftDistance,
+                rightDistance,
+                kmerCount,
+                totalKmers,
+                effLength,
+                ibs,
+                weights
+        );
     }
 
     /***
@@ -71,15 +98,21 @@ public class Window implements Comparable<Window> {
     /***
      * Add data to the window
      */
-    public synchronized void addData(String sample, int observedKmers, int variations, int innerDistance, int leftDistance, int rightDistance, String ibs, double[] weights) {
-        Data d = data.computeIfAbsent(sample, k -> new Data(0, 0, 0, 0,0, totalKmers, effLength, weights));
-        d.observedKmers = observedKmers;
-        d.variations = variations;
-        d.innerDistance = innerDistance;
-        d.rightDistance = rightDistance;
-        d.leftDistance = leftDistance;
-        d.score = d.computeScore(totalKmers, effLength, weights);
-        d.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
+    public synchronized void addData(String sample,
+                                     int observedKmers,
+                                     int variations,
+                                     int innerDistance,
+                                     int leftDistance,
+                                     int rightDistance,
+                                     long kmerCount,
+                                     String ibs,
+                                     double[] weights) {
+
+        Data d = data.computeIfAbsent(sample,
+                k -> new Data(0, 0, 0, 0, 0, 0, totalKmers, effLength, weights));
+
+        d.update(observedKmers, variations, innerDistance, leftDistance,
+                rightDistance, kmerCount, ibs, totalKmers, effLength, weights);
     }
 
     public void recalcScore(double[] weights){
@@ -135,7 +168,7 @@ public class Window implements Comparable<Window> {
     }
 
     private String getFormatField() {
-        return "GT:VA:OB:ID:LD:RD:SC";
+        return "GT:VA:OB:ID:LD:RD:KD:SC";
     }
 
     /***
@@ -297,6 +330,10 @@ public class Window implements Comparable<Window> {
 
     public int getTailDistance(String sample) {
         return data.get(sample).getTailDistance();
+    }
+
+    public double getMeanKmerCount(String sample) {
+        return data.get(sample).getMeanKmerCount();
     }
 }
 // EOF

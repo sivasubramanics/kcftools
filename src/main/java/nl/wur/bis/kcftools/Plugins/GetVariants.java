@@ -207,6 +207,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         boolean isTail = true;
         int localLeftDist = 0;
         int localRightDist = 0;
+        long localKmerCount = 0;
 
         if (fasta == null) {
             Logger.error(CLASS_NAME, "Fasta object is null for window: " + window.getWindowId());
@@ -218,9 +219,10 @@ public class GetVariants implements Callable<Integer>, Runnable {
             for (Kmer k : kmers) {
                 localTotalKmers++;
                 Kmer km = new Kmer(k, kmc.isBothStrands());
-
-                if (kmc.getCount(km) >= minKmerCount) {
+                int kmerCount = kmc.getCount(km);
+                if (kmerCount >= minKmerCount) {
                     // if the kmer exists in the KMC database, 1+ observed kmers
+                    localKmerCount += kmerCount;
                     localObservedKmers++;
                     if (gapSize > 0) {
                         // if there is a gap, increment the variation
@@ -251,7 +253,7 @@ public class GetVariants implements Callable<Integer>, Runnable {
         synchronized (window) {
             window.addTotalKmers(localTotalKmers);
             window.setEffLength(fasta.getEffectiveATGCCount(kmerSize));
-            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, "N", getWeights());
+            window.addData(sampleName, localObservedKmers, localVariation, localInnerDistance, localLeftDist, localRightDist, localKmerCount, "N", getWeights());
         }
 
         return window;

@@ -13,7 +13,6 @@ import nl.wur.bis.kcftools.Utils.Logger;
  * tailDistance: number of bases that are not part of the observedKmers, which are to the left and right side of window
  */
 public class Data{
-    int tailDistance;
     int innerDistance;
     int observedKmers;
     int variations;
@@ -21,6 +20,7 @@ public class Data{
     int ibs;
     int leftDistance;
     int rightDistance;
+    double meanKmerCount;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
 
@@ -29,16 +29,12 @@ public class Data{
                 int innerDistance,
                 int leftDistance,
                 int rightDistance,
+                long kmerCount,
                 int totalKmers,
                 int effLength,
                 double[] weights) {
-        this.observedKmers = observedKmers;
-        this.variations = variations;
-        this.leftDistance = leftDistance;
-        this.rightDistance = rightDistance;
-        this.innerDistance = innerDistance;
-        this.score = computeScore(totalKmers, effLength, weights);
-        this.ibs = -1;
+        this(observedKmers, variations, innerDistance, leftDistance, rightDistance,
+                kmerCount, totalKmers, effLength, "-1", weights);
     }
 
     public Data(int observedKmers,
@@ -46,20 +42,51 @@ public class Data{
                 int innerDistance,
                 int leftDistance,
                 int rightDistance,
+                long kmerCount,
                 int totalKmers,
                 int effLength,
-                String ibs, double[] weights) {
+                String ibs,
+                double[] weights) {
+
         this.observedKmers = observedKmers;
         this.variations = variations;
         this.leftDistance = leftDistance;
         this.rightDistance = rightDistance;
         this.innerDistance = innerDistance;
+
+        this.meanKmerCount = (kmerCount > 0)
+                ? (double) kmerCount / observedKmers
+                : 0.00;
+
         this.score = computeScore(totalKmers, effLength, weights);
-        if (ibs.equals("N")){
+
+        if ("N".equals(ibs)) {
             this.ibs = -1;
         } else {
             this.ibs = Integer.parseInt(ibs);
         }
+    }
+
+    public void update(int observedKmers,
+                       int variations,
+                       int innerDistance,
+                       int leftDistance,
+                       int rightDistance,
+                       long kmerCount,
+                       String ibs,
+                       int totalKmers,
+                       int effLength,
+                       double[] weights) {
+
+        this.observedKmers = observedKmers;
+        this.variations = variations;
+        this.innerDistance = innerDistance;
+        this.leftDistance = leftDistance;
+        this.rightDistance = rightDistance;
+
+        this.meanKmerCount = (observedKmers > 0) ? (double) kmerCount / observedKmers : 0.00;
+        this.score = computeScore(totalKmers, effLength, weights);
+        this.ibs = "N".equals(ibs) ? -1 : Integer.parseInt(ibs);
     }
 
     /***
@@ -90,21 +117,31 @@ public class Data{
      * Get string representation of the data (for KCF writing purpose)
      */
     @Override
-    public String toString(){
-        // ibs:variations:observedKmers:innerDistance:leftDistane:rightDistance:score
-        if (ibs == -1){
-            return "N" + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + leftDistance + ":" + rightDistance + ":" + String.format("%.2f", score);
-        }
-        return ibs + ":" + variations + ":" + observedKmers + ":" + innerDistance + ":" + leftDistance + ":" + rightDistance + ":" + String.format("%.2f", score);
+    public String toString() {
+        String ibsValue = (ibs == -1) ? "N" : String.valueOf(ibs);
+        return String.join(":",
+                ibsValue,
+                String.valueOf(getVariations()),
+                String.valueOf(getObservedKmers()),
+                String.valueOf(getInnerDistance()),
+                String.valueOf(getLeftDistance()),
+                String.valueOf(getRightDistance()),
+                String.format("%.2f", getMeanKmerCount()),
+                String.format("%.2f", getScore())
+        );
     }
 
     /***
      * Get TSV formated string representation of the data (to write in native IBSpy table format)
      */
     public String toTSV() {
-        int distance = getInnerDistance() + getTailDistance();
-        double score = getScore();
-        return getObservedKmers() + "\t" + getVariations() + "\t" + distance + "\t" + String.format("%.2f", score);
+        return String.join("\t",
+                String.valueOf(getObservedKmers()),
+                String.valueOf(getVariations()),
+                String.valueOf(getInnerDistance() + getTailDistance()),
+                String.format("%.2f", getMeanKmerCount()),
+                String.format("%.2f", getScore())
+        );
     }
 
     /***
@@ -140,6 +177,10 @@ public class Data{
 
     public int getRightDistance() {
         return rightDistance;
+    }
+
+    public double getMeanKmerCount() {
+        return meanKmerCount;
     }
 }
 // EOF
