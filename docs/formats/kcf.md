@@ -31,12 +31,17 @@ The `.kcf` file begins with a series of metadata headers describing the format v
 ##FORMAT=<ID=ID,Type=Integer,Description="Inner distance">
 ##FORMAT=<ID=LD,Type=Integer,Description="Left tail distance">
 ##FORMAT=<ID=RD,Type=Integer,Description="Right tail distance">
+##FORMAT=<ID=KD,Type=Float,Description="Mean kmer depth">
 ##FORMAT=<ID=SC,Type=Float,Description="Score">
-##PARAM=<ID=window,value=50000>
+##PARAM=<ID=window,value=0>
+##PARAM=<ID=step,value=0>
 ##PARAM=<ID=kmer,value=31>
 ##PARAM=<ID=IBS,value=false>
-##PARAM=<ID=nwindow,value=6498>
-##CMD=kcftools-0.0.1-SNAPSHOT.jar getVariations -k lsal.chr3 -o lsal.kcftools.kcf -r lsatv11.chr3.fasta -s lsal -t 24 -w 50000
+##PARAM=<ID=nwindow,value=72837>
+##PARAM=<ID=wti,value=0.5>
+##PARAM=<ID=wtt,value=0.5>
+##PARAM=<ID=wtk,value=0.0>
+##CMD=kcftools.jar getVariations -k lsal.chr3 -o lsal.kcftools.kcf -r lsatv11.chr3.fasta -s lsal -t 24 -w 50000
 ```
 
 ### Header Line Details
@@ -85,6 +90,7 @@ Sample fields are defined based on the `FORMAT` column and provide detailed metr
 | `ID`  | Inner distance (gap within the window between *k*-mer hits)                |
 | `LD`  | Left tail distance (gap at the beginning of the window)                    |
 | `RD`  | Right tail distance (gap at the end of the window)                         |
+| `KD` | mean *k*-mer depth in the window |
 | `SC`  | Identity score (e.g., percentage similarity between sample and reference)  |
 
 ---
@@ -99,7 +105,7 @@ Sample fields are defined based on the `FORMAT` column and provide detailed metr
 ## Example Data Row
 
 ```
-chr3    0       50000   1012    IS=0.91;XS=1.00;MS=0.95;IO=980;XO=1000;MO=990;IV=0;XV=3;MV=1     IB:VA:OB:ID:LD:RD:SC     989:0:990:0:0:0:99.95
+chr3    0       50000   1012    IS=0.91;XS=1.00;MS=0.95;IO=980;XO=1000;MO=990;IV=0;XV=3;MV=1     IB:VA:OB:ID:LD:RD:KD:SC     989:0:990:0:0:0:10.85:99.95
 ```
 
 This row shows:
