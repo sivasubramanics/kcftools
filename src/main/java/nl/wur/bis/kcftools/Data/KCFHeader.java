@@ -27,17 +27,11 @@ public class KCFHeader implements Comparable<KCFHeader> {
     // window [0], step [1], kmer [2], IBS [3], numWindow [4], weightInnerDistance [5], weightTailDistance [6], weightKmerRatio [7] as parameters in the order
     private final Pair[] params = new Pair[8];
 
-    public KCFHeader(){
-        this.version = Configs.KCF_VERSION.getValue();
-        this.source = Configs.KCF_SOURCE.getValue();
-        this.date = HelperFunctions.getTodayDate();
-        this.reference = "";
-        this.contigs = null;
-        this.infoLines = Configs.KCF_INFO_LINES.getValue();
-        this.formatLines = Configs.KCF_FORMAT_LINES.getValue();
+    public KCFHeader() {
+        this("", null); // default to empty reference and no contigs
     }
 
-    public KCFHeader(String reference, LinkedHashMap<String, Integer> contigs){
+    public KCFHeader(String reference, LinkedHashMap<String, Integer> contigs) {
         this.version = Configs.KCF_VERSION.getValue();
         this.source = Configs.KCF_SOURCE.getValue();
         this.date = HelperFunctions.getTodayDate();
