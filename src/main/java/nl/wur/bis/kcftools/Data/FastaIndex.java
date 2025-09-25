@@ -18,6 +18,10 @@ public class FastaIndex implements AutoCloseable {
     private final MappedByteBuffer[] buffer;
     private final Object bufferLock = new Object();
     private final String CLASS_NAME = this.getClass().getSimpleName();
+    private static final Set<Character> VALID_BASES = Set.of(
+            'A','C','G','T','Y','R','W','S','M','K','H','B','V','D','N',
+            'a','c','g','t','y','r','w','s','m','k','h','b','v','d','n'
+    );
 
     public FastaIndex(String fastaFilePath) throws IOException {
         File fastaFile = new File(fastaFilePath);
@@ -242,6 +246,7 @@ public class FastaIndex implements AutoCloseable {
              BufferedWriter writer = new BufferedWriter(new FileWriter(indexFile))) {
 
             String line;
+            int lineNumber = 0;
             long offset = 0;
             String currentName = null;
             int lineBases = 0;
@@ -249,8 +254,13 @@ public class FastaIndex implements AutoCloseable {
             int seqLength = 0;
             long sequenceStartOffset = 0;
             boolean inSequence = false;
+            List<String> sequenceNames = new ArrayList<>();
 
             while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                if (offset == 0 && !line.startsWith(">")) {
+                    Logger.error(CLASS_NAME, "Invalid fasta file: " + fastaFile);
+                }
                 if (line.startsWith(">")) {
                     if (inSequence) {
                         writer.write(currentName + "\t" + seqLength + "\t" + sequenceStartOffset + "\t" + lineBases + "\t" + lineWidth + "\n");
@@ -260,7 +270,20 @@ public class FastaIndex implements AutoCloseable {
                     sequenceStartOffset = offset;
                     inSequence = true;
                     seqLength = 0;
+                    if (sequenceNames.contains(currentName)) {
+                        Logger.error(CLASS_NAME, "Duplicate sequence name in fasta file: " + currentName + " at line " + lineNumber);
+                    } else {
+                        sequenceNames.add(currentName);
+                    }
                 } else {
+                    for (int i = 0; i < line.length(); i++) {
+                        if (!VALID_BASES.contains(line.charAt(i))) {
+                            Logger.error(CLASS_NAME,
+                                    "Invalid character '" + line.charAt(i) +
+                                            "' in fasta file: " + fastaFile + " at line " + lineNumber);
+                            break;
+                        }
+                    }
                     if (seqLength == 0) {
                         lineBases = line.length();
                         lineWidth = line.length() + System.lineSeparator().length();
