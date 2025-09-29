@@ -11,9 +11,9 @@ import picocli.CommandLine.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.ExecutionException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /***
  * Cohort class to create a cohort of samples kcf files.
@@ -30,9 +30,6 @@ public class Cohort implements Callable<Integer>, Runnable {
 
     @Option(names = {"-l", "--list"}, description = "File containing list of samples kcf files", required = false)
     private String listFile;
-
-    @Option(names = {"-t", "--threads"}, description = "Number of threads to use (default: 1)", defaultValue = "1")
-    private int nThreads;
 
     private static final String CLASS_NAME = Cohort.class.getSimpleName();
 
@@ -69,93 +66,55 @@ public class Cohort implements Callable<Integer>, Runnable {
     }
 
     /***
-     * Main function to cohort kcf files (with multithreading for reading).
+     * Main function to cohort kcf files.
      */
     private void cohortKcfFiles() {
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
-
-        List<Future<FileResult>> futures = new ArrayList<>();
-        for (String file : inFiles) {
-            futures.add(executor.submit(() -> readKcfFile(file)));
-        }
-
         Map<String, Window> windows = new LinkedHashMap<>();
         KCFHeader header = null;
+        KCFHeader tmpHeader = null;
 
-        try {
-            for (int i = 0; i < futures.size(); i++) {
-                FileResult result = futures.get(i).get(); // wait for result
-
+        for (int i = 0; i < inFiles.length; i++) {
+            try (KCFReader reader = new KCFReader(inFiles[i])) {
                 if (i == 0) {
-                    header = result.header;
-                    windows.putAll(result.windows);
+                    header = reader.getHeader();
+                    for (Window window : reader) {
+                        windows.put(window.getWindowId(), window);
+                    }
                 } else {
-                    if (!header.equals(result.header)) {
+                    tmpHeader = reader.getHeader();
+                    assert header != null;
+                    if(!header.equals(tmpHeader)) {
                         Logger.error(CLASS_NAME, "Headers mismatch found in sample: " + inFiles[i]);
                     }
-                    header.mergeHeader(result.header);
-
-                    for (Map.Entry<String, Window> e : result.windows.entrySet()) {
-                        String key = e.getKey();
+                    header.mergeHeader(tmpHeader);
+                    for (Window window : reader) {
+                        String key = window.getWindowId();
                         if (windows.containsKey(key)) {
-                            windows.get(key).addData(e.getValue().getData());
+                            windows.get(key).addData(window.getData());
                         } else {
-                            Logger.error(CLASS_NAME, "Windows mismatch found in sample: " + inFiles[i] + " at window: " + key);
+                            Logger.error(CLASS_NAME, "Windows mismatch found in sample: " + inFiles[i] + " at window: " + window);
                         }
                     }
                 }
+            } catch (Exception e) {
+                Logger.error(CLASS_NAME, "Error reading KCF file: " + inFiles[i]);
             }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        } finally {
-            executor.shutdown();
         }
 
-        try (KCFWriter writer = new KCFWriter(outFile)) {
+        try(KCFWriter writer = new KCFWriter(outFile)) {
             assert header != null;
             header.addCommandLine(HelperFunctions.getCommandLine());
             writer.writeHeader(header);
 
+            // align samples in each window with the header
             String[] headerSamples = header.getSamples();
             for (Window window : windows.values()) {
                 window.alignSamplesWithHeader(headerSamples);
             }
+
             writer.writeWindows(windows.values());
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    /***
-     * Reads one KCF file into header + windows (used by worker threads).
-     */
-    private FileResult readKcfFile(String file) {
-        Map<String, Window> localWindows = new LinkedHashMap<>();
-        KCFHeader header;
-
-        try (KCFReader reader = new KCFReader(file)) {
-            header = reader.getHeader();
-            for (Window w : reader) {
-                localWindows.put(w.getWindowId(), w);
-            }
-        } catch (Exception e) {
-            Logger.error(CLASS_NAME, "Error reading KCF file: " + file);
-            throw new RuntimeException(e);
-        }
-
-        return new FileResult(header, localWindows);
-    }
-
-    /**
-     * Helper class to return results from one file.
-     */
-    private static class FileResult {
-        KCFHeader header;
-        Map<String, Window> windows;
-
-        FileResult(KCFHeader header, Map<String, Window> windows) {
-            this.header = header;
-            this.windows = windows;
         }
     }
 }
