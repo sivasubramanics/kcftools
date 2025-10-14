@@ -16,6 +16,7 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
     private final String filename;
     private KCFHeader header;
     private int windowId = 0;
+    private int windowCount = 0;
 
     private final String CLASS_NAME = this.getClass().getSimpleName();
 
@@ -92,6 +93,12 @@ public class KCFReader implements Iterable<Window>, AutoCloseable {
 
             try {
                 String[] fields = nextLine.split("\t");
+                windowCount += 1;
+                if (windowCount == 1){
+                    if (fields[6].equals("GT:VA:OB:ID:LD:RD:SC")){
+                        Logger.warning(CLASS_NAME, "KCF file appears to be in old format. KD field is missing. Will be set to 0.");
+                    }
+                }
 
                 Window window = new Window(fields, getHeader().getSamples(), getHeader().getWeights());
 
