@@ -174,6 +174,12 @@ public class FindIBS implements Callable<Integer>, Runnable {
 
         if (writeSummary) {
             try (BufferedWriter summaryWriter = new BufferedWriter(new FileWriter(outFile.replace(".kcf", ".summary.tsv")))) {
+                StringBuilder meta = new StringBuilder();
+                meta.append("# input:").append(inFile).append("\n");
+                meta.append("# type:").append(detectVar ? "var" : "ibs").append("\n");
+                meta.append("# score:").append(scoreCutOff).append("\n");
+                meta.append("# minconsecutive:").append(minConsecutive).append("\n");
+                summaryWriter.write(meta.toString());
                 // write header for the summary file
                 summaryWriter.write("Block\tSample\tChromosome\tStart\tEnd\tLength\tTotalBlocks\tIBSBlocks\tIBSProportion\tMeanScore\n");
 
