@@ -18,6 +18,7 @@ import java.util.Locale;
                 Cohort.class,
                 FindIBS.class,
                 SplitKCF.class,
+                ExtractKCF.class,
                 GetAttributes.class,
                 KCFToTSV.class,
 //                CompareIBS.class,

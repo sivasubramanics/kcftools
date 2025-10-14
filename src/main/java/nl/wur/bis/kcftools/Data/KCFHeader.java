@@ -218,7 +218,7 @@ public class KCFHeader implements Comparable<KCFHeader> {
         return samples;
     }
 
-    public void setSample(String[] sampleNames){
+    public void setSamples(String[] sampleNames){
         this.samples = sampleNames;
     }
 
@@ -450,6 +450,45 @@ public class KCFHeader implements Comparable<KCFHeader> {
      */
     public double[] getWeights() {
         return new double[]{getWeightInnerDist(), getWeightTailDist(), getWeightKmerRatio()};
+    }
+
+    /***
+     * Copy constructor for deep copy
+     */
+    public KCFHeader(KCFHeader other) {
+        this.version = other.version;
+        this.source = other.source;
+        this.date = other.date; // immutable, safe to copy directly
+        this.reference = other.reference;
+
+        // Deep copy of contigs map
+        if (other.contigs != null) {
+            this.contigs = new LinkedHashMap<>(other.contigs);
+        }
+
+        // Copy immutable Strings
+        this.infoLines = other.infoLines;
+        this.formatLines = other.formatLines;
+
+        // Deep copy of command lines
+        if (other.commandLines != null) {
+            this.commandLines = new ArrayList<>(other.commandLines);
+        }
+
+        // Deep copy of samples array
+        if (other.samples != null) {
+            this.samples = Arrays.copyOf(other.samples, other.samples.length);
+        }
+
+        // Deep copy of params array
+        if (other.params != null) {
+            for (int i = 0; i < other.params.length; i++) {
+                Pair p = other.params[i];
+                if (p != null) {
+                    this.params[i] = new Pair(p.getKey(), p.getValue());
+                }
+            }
+        }
     }
 }
 

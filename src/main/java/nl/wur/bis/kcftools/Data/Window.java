@@ -282,6 +282,8 @@ public class Window implements Comparable<Window> {
         for (String sample : headerSamples) {
             alignedData.put(sample, this.data.getOrDefault(sample, null));
         }
+        // remove aligned samples that are null
+        alignedData.values().removeIf(Objects::isNull);
         this.data = alignedData;
     }
 
