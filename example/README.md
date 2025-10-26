@@ -6,7 +6,7 @@ This example workflow demonstrates how to use **KCFtools** to detect introgresse
 
 ## Example Input Files
 
-You should have three FASTA files:
+This directory contains three FASTA files and two additional files:
 
 | File           | Description                                                         |
 |----------------|---------------------------------------------------------------------|
