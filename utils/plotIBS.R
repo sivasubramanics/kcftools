@@ -10,9 +10,9 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(ggh4x)
   library(ape)
-  library(ggtree)
-  library(patchwork)
-  library(phytools)
+  # library(ggtree)
+  # library(patchwork)
+  # library(phytools)
 })
 
 # ── Command line options ──
