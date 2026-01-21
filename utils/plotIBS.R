@@ -29,7 +29,9 @@ option_list <- list(
   make_option(c("-C", "--chrom"), type="character", default=NULL,
                help="Optional specific chromosome to plot (default: all)"),
   make_option(c("-V", "--var"), action="store_true", default=FALSE,
-              help="Plot variable regions instead of identical regions (default: FALSE)")
+              help="Plot variable regions instead of identical regions (default: FALSE)"),
+  make_option(c("-M", "--minchrlen"), type="numeric", default=1e6,
+              help="Minimum chromosome length to plot (default: 1e6)")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -63,7 +65,8 @@ parse_chr_meta <- function(chr_meta_file) {
       chr_start = cum_len - len,
       chr_end = cum_len,
       mid = cum_len - (len / 2)
-    )
+    ) %>%
+    filter(len >= opt$minchrlen)
 }
 
 # ── Load data ──
@@ -78,7 +81,7 @@ if (!is.null(opt$chrom)) {
   cat("Plotting only chromosome:", paste(chrinfo$chrom_name, collapse=", "), "\n")
 }
 
-ibs <- map_dfr(ibs_files, read_tsv, show_col_types = FALSE) %>%
+ibs <- map_dfr(ibs_files, read_tsv, show_col_types = FALSE, comment = "#") %>%
   filter(Chromosome %in% chrinfo$chrom_name)
 
 accessions <- ibs %>%
