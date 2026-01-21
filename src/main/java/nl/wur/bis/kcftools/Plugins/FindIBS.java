@@ -31,6 +31,9 @@ public class FindIBS implements Callable<Integer>, Runnable {
     // score cut-off
     @Option(names = {"--score"}, description = "Score cut-off [default: 95.00]", required = false, defaultValue = "95")
     private float scoreCutOff;
+    //flag to write kcf file
+    @Option(names = {"--kcf"}, description = "Write output KCF file [default: false]", required = false, defaultValue = "false")
+    private boolean writeKCF;
     // flag to write summary tsv file
     @Option(names = {"--summary"}, description = "Write summary tsv file [default: false]", required = false, defaultValue = "false")
     private boolean writeSummary;
@@ -70,6 +73,11 @@ public class FindIBS implements Callable<Integer>, Runnable {
      * Main function to find IBS windows in a KCF file
      */
     private void findIBS() throws Exception {
+
+        // either write kcf or summary must be true
+        if (!writeKCF && !writeSummary) {
+            Logger.error(CLASS_NAME, "Either --kcf or --summary must be true");
+        }
 
         // if outFile doesnt end with .kcf, add it
         if (!outFile.endsWith(".kcf")) {
@@ -160,14 +168,15 @@ public class FindIBS implements Callable<Integer>, Runnable {
             }
         }
 
-
-        try (KCFWriter writer = new KCFWriter(outFile)) {
-            header.setIBS(true);
-            header.addCommandLine(HelperFunctions.getCommandLine());
-            writer.writeHeader(header);
-            for (String chromName : windows.keySet()) {
-                for (Window window : windows.get(chromName)) {
-                    writer.writeWindow(window);
+        if (writeKCF) {
+            try (KCFWriter writer = new KCFWriter(outFile)) {
+                header.setIBS(true);
+                header.addCommandLine(HelperFunctions.getCommandLine());
+                writer.writeHeader(header);
+                for (String chromName : windows.keySet()) {
+                    for (Window window : windows.get(chromName)) {
+                        writer.writeWindow(window);
+                    }
                 }
             }
         }
