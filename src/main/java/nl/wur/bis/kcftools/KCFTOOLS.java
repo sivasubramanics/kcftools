@@ -25,7 +25,8 @@ import java.util.Locale;
                 IncreaseWindows.class,
                 KCFToPed.class,
                 ScoreRecalc.class,
-                KCFToGenotypeTable.class
+                KCFToGenotypeTable.class,
+                UniqueKmerDensity.class
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
