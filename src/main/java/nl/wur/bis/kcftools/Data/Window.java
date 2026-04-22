@@ -66,8 +66,13 @@ public class Window implements Comparable<Window> {
         int innerDistance = Integer.parseInt(sampleData[3]);
         int leftDistance = Integer.parseInt(sampleData[4]);
         int rightDistance = Integer.parseInt(sampleData[5]);
+        long kmerCount = 0;
+        if (sampleData.length == 8){
+            kmerCount = Math.round(Double.parseDouble(sampleData[6]) * observedKmers);
+        }
+
         // Ensure kmerCount is a long, not double
-        long kmerCount = Math.round(Double.parseDouble(sampleData[6]) * observedKmers);
+//        long kmerCount = Math.round(Double.parseDouble(sampleData[6]) * observedKmers);
         return new Data(
                 observedKmers,
                 variations,
@@ -277,6 +282,8 @@ public class Window implements Comparable<Window> {
         for (String sample : headerSamples) {
             alignedData.put(sample, this.data.getOrDefault(sample, null));
         }
+        // remove aligned samples that are null
+        alignedData.values().removeIf(Objects::isNull);
         this.data = alignedData;
     }
 

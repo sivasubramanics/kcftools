@@ -48,7 +48,8 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                     "  - totalkmers : total kmers per window",
                     "  - winlen     : effective window length",
                     "  - inDist     : inner distance",
-                    "  - tailDist   : tail distance"
+                    "  - tailDist   : tail distance",
+                    "  - dist       : distance (inDist + tailDist)"
             }
     )
     private List<String> attributes;
@@ -58,7 +59,7 @@ public class GetAttributes implements Callable<Integer>, Runnable {
 
     // Define all available attributes once
     private static final List<String> ALL_ATTRIBUTES = Arrays.asList(
-            "obs", "var", "kd", "score", "totalkmers", "winlen", "inDist", "tailDist"
+            "obs", "var", "kd", "score", "totalkmers", "winlen", "inDist", "tailDist", "dist"
     );
 
     @Override
@@ -154,6 +155,10 @@ public class GetAttributes implements Callable<Integer>, Runnable {
                         case "winlen":
                             w.write(window.getWindowId() + "\t" + window.getEffLength());
                             w.newLine();
+                            break;
+                        case "dist":
+                            writeSampleValues(w, window.getWindowId(), samples,
+                                    s -> window.getInnerDistance(s) + window.getTailDistance(s));
                             break;
                     }
                 }

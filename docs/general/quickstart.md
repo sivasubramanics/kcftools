@@ -1,12 +1,12 @@
 # Quick Start
 
-This is a quick start guide to use **KCFTOOLS** for genomic variation analysis. It covers installation, database preparation, and basic usage. We recommend reading the [Workflow](./workflow.md) and [Methodology](./methodology.md) sections for a more detailed understanding of the tool's functionalities.
+This is a quick start guide to use **KCFtools** for genomic variation analysis. It covers installation, database preparation, and basic usage. We recommend reading the [Workflow](./workflow.md) and [Methodology](./methodology.md) sections for a more detailed understanding of the tool's functionalities.
 
 ---
 
-## 1. Install KCFTOOLS
+## 1. Install KCFtools
 
-Assuming the prerequisites are met, you can install KCFTOOLS using the following command:
+Assuming the prerequisites are met, you can install KCFtools using the following command:
 
     $ conda install -c bioconda kcftools
 
@@ -45,6 +45,6 @@ To identify IBS (Identity by State) windows, use the `findIBS` command:
 This command will generate an IBS summary file named `sample.ibs.summary.tsv` containing the IBS windows identified in the KCF file with additional summary.
 
 !!! note
-    A workaround [bash script](https://github.com/sivasubramanics/kcftools/blob/main/utils/run_kcftools.sh) to run the complete pipeline for multiple samples is provided along with the KCFTOOLS source code. You can find it in the `utils` directory. This script automates the process of creating KCF files for multiple samples and finding IBS windows. Details on how to use this script can be found in the [Run Pipeline](usage/pipeline.md) documentation.
+    A workaround [bash script](https://github.com/sivasubramanics/kcftools/blob/main/utils/run_kcftools.sh) to run the complete pipeline for multiple samples is provided along with the KCFTools source code. You can find it in the `utils` directory. This script automates the process of creating KCF files for multiple samples and finding IBS windows. Details on how to use this script can be found in the [Run Pipeline](usage/pipeline.md) documentation.
 
 

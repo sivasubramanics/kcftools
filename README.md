@@ -2,16 +2,28 @@
 [![GitHub all releases](https://img.shields.io/github/downloads/sivasubramanics/kcftools/total?style=social&logo=github&label=Download)](https://github.com/sivasubramanics/kcftools/releases)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/kcftools.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/kcftools)
 [![Release](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml/badge.svg)](https://github.com/sivasubramanics/kcftools/actions/workflows/release.yml)
-[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
+[![Version](https://img.shields.io/badge/version-0.5.0-green.svg)](https://github.com/sivasubramanics/kcftools/releases)
 [![License: GPL v3.0 only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Docs](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://kcftools.readthedocs.io)
 <!--- badges: end --->
 
-# KCFTOOLS
+# KCFtools
 
-**KCFTOOLS** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed *k*-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
+**KCFtools** is a Java-based toolset for identifying genomic variations through counting kmer presence/absence between reference and query genomes. It utilizes precomputed *k*-mer count databases (from [KMC](https://github.com/refresh-bio/KMC)) to perform a wide array of genomic analyses including variant detection, IBS window identification, and genotype matrix generation.
 
 Detailed documentation is available at **[kcftools.readthedocs.io](https://kcftools.readthedocs.io)**.
+
+Cite the following publication if you use KCFtools in your research: 
+```
+@article{Sivasubramani2025KCFtools,
+  title     = {{KCFtools}: Rapid alignment-free method for introgression screening and GWAS using k-mer profiles},
+  author    = {elvanayagam, Sivasubramani and Quiroz-Chavez, Jesus and Ramirez-Gonzalez, Ricardo H. and Uauy, Cristobal and Smit, Sandra and Schranz, M. Eric},
+  year      = {2024},
+  journal   = {bioRxiv},
+  doi       = {10.1101/2025.11.01.685998}
+}
+
+```
 
 ---
 ### Quick Start
@@ -50,12 +62,12 @@ To quickly get started with `kcftools`, refer to the [`run_kcftools.sh`](https:/
 
 ## Introduction
 
-KCFTOOLS is designed for high-throughput genomic analysis using efficient *k*-mer based methods. By leveraging fast *k*-mer counting from tools like KMC, KCFTOOLS can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
+KCFtools is designed for high-throughput genomic analysis using efficient *k*-mer based methods. By leveraging fast *k*-mer counting from tools like KMC, KCFTtools can rapidly compare genome samples to a reference, identify variations, and produce downstream outputs useful for population genetics and comparative genomics studies.
 
 
 ## Methodology
 
-KCFTOOLS (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference *k*-mers is screened against query *k*-mer databases built using KMC3. For each window, the number of observed *k*-mers is counted, and variations are identified as consecutive gaps between matching *k*-mers. These gaps are used to compute the *k*-mer distance, representing the number of bases not covered by observed *k*-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calculated using the below formula,
+KCFtools (specifically the `getVariations` plugin), splits the reference sequence into non-overlapping windows: either fixed-length regions, gene models, or transcript features from a GTF file—and the presence of reference *k*-mers is screened against query *k*-mer databases built using KMC3. For each window, the number of observed *k*-mers is counted, and variations are identified as consecutive gaps between matching *k*-mers. These gaps are used to compute the *k*-mer distance, representing the number of bases not covered by observed *k*-mers. This distance is divided into inner distance (gaps between hits within the window) and tail distance (gaps at the window edges), providing a detailed measure of sequence divergence or gene loss at multiple resolutions. The identity score for each window is being calculated using the below formula,
 
 $$
 \text{Identity Score} = W_o \cdot \left( \frac{\text{obs k-mers}}{\text{total k-mers}} \right) + W_i \cdot \left( 1 - \frac{\text{inner dist}}{\text{eff length}} \right) + W_t \cdot \left( 1 - \frac{\text{tail dist}}{\text{eff length}} \right) \cdot 100
@@ -69,7 +81,7 @@ where:
 - **tail dist**: Uncovered base positions at the start and end of the window (flanking gaps).
 - **eff length**: Effective length of the window (in base pairs), length of the reference window that is covered by total_kmers.
 
-![KCFTOOLS Methodology](images/kcftools_methodology.png)
+![KCFtools Methodology](images/kcftools_methodology.png)
 _Figure: Overview of the `kcftools getVariations` methodology._
 
 ---
@@ -89,7 +101,7 @@ _Figure: Overview of the `kcftools getVariations` methodology._
 
 ## Workflow
 
-![KCFTOOLS Workflow](images/kcftools_workflow.png)
+![KCFtools Workflow](images/kcftools_workflow.png)
 _Figure: Overview of the `kcftools` workflow_
 
 ---
@@ -210,7 +222,7 @@ kcftools getVariations [options]
 	-g, --gtf=<gtfFile>           : GTF annotation file (for gene/transcript features)  
 	--wi, --wt, --wr              : Weights for inner distance, tail distance, and kmer ratio, respectively  
 	-m, --memory                  : Load KMC database into memory (faster for small DBs)
-    -c, --min-k-count             : Minimum *k*-mer count to consider (default: 1)
+    -c, --min-k-count             : Minimum k-mer count to consider (default: 1)
     -p, --step                    : Step size for sliding windows (default: window size, i.e., non-overlapping)
 ---
 

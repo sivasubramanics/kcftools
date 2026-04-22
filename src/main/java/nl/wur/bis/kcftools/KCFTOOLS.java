@@ -18,13 +18,15 @@ import java.util.Locale;
                 Cohort.class,
                 FindIBS.class,
                 SplitKCF.class,
+                ExtractKCF.class,
                 GetAttributes.class,
                 KCFToTSV.class,
 //                CompareIBS.class,
                 IncreaseWindows.class,
                 KCFToPed.class,
                 ScoreRecalc.class,
-                KCFToGenotypeTable.class
+                KCFToGenotypeTable.class,
+                UniqueKmerDensity.class
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
