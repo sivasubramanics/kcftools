@@ -31,12 +31,14 @@ option_list <- list(
   make_option(c("-V", "--var"), action="store_true", default=FALSE,
               help="Plot variable regions instead of identical regions (default: FALSE)"),
   make_option(c("-M", "--minchrlen"), type="numeric", default=1e6,
-              help="Minimum chromosome length to plot (default: 1e6)")
+              help="Minimum chromosome length to plot (default: 1e6)"),
+  make_option(c("-s", "--score"), type="numeric", default=NULL,
+              help="score cutoff to filter (default: NULL)")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
 
-if (is.null(opt$chrinfo) || is.null(opt$ibs) || is.null(opt$output)) {
+if (is.null(opt$chrinfo) || is.null(opt$ibs) || is.null(opt$output) || is.null(opt$score)) {
   print_help(OptionParser(option_list=option_list))
   stop("Missing required arguments.", call.=FALSE)
 }
@@ -89,6 +91,14 @@ accessions <- ibs %>%
 
 ibs <- ibs %>%
   filter(Length >= opt$minlen)
+
+if (opt$var){
+  ibs <- ibs %>%
+    filter(MeanScore <= opt$score)
+} else {
+  ibs <- ibs %>%
+    filter(MeanScore >= opt$score)
+}
 
 if (nrow(ibs) == 0) {
   stop("No IBS segments found after filtering. Try lowering --minlen or check input files.")
