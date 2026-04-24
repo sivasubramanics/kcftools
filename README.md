@@ -17,7 +17,7 @@ Cite the following publication if you use KCFtools in your research:
 ```
 @article{Sivasubramani2025KCFtools,
   title     = {{KCFtools}: Rapid alignment-free method for introgression screening and GWAS using k-mer profiles},
-  author    = {elvanayagam, Sivasubramani and Quiroz-Chavez, Jesus and Ramirez-Gonzalez, Ricardo H. and Uauy, Cristobal and Smit, Sandra and Schranz, M. Eric},
+  author    = {Selvanayagam, Sivasubramani and Quiroz-Chavez, Jesus and Ramirez-Gonzalez, Ricardo H. and Uauy, Cristobal and Smit, Sandra and Schranz, M. Eric},
   year      = {2024},
   journal   = {bioRxiv},
   doi       = {10.1101/2025.11.01.685998}
