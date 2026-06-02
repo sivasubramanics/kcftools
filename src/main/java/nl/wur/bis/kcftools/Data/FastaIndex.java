@@ -25,14 +25,20 @@ public class FastaIndex implements AutoCloseable {
 
     public FastaIndex(String fastaFilePath) throws IOException {
         File fastaFile = new File(fastaFilePath);
-        String faiFilePath = fastaFilePath + ".faidx";
-        File indexFile = new File(faiFilePath);
+        File samtoolsFai = new File(fastaFilePath + ".fai");
+        File indexFile;
 
-        if (!indexFile.exists() || HelperFunctions.isOlder(indexFile, fastaFile)) {
-            Logger.info(CLASS_NAME, "Generating/Updating index file: " + faiFilePath);
-            generateIndexFile(fastaFile, indexFile);
+        if (samtoolsFai.exists() && !HelperFunctions.isOlder(samtoolsFai, fastaFile)) {
+            indexFile = samtoolsFai;
+            Logger.info(CLASS_NAME, "Using existing index file: " + samtoolsFai.getPath());
         } else {
-            Logger.info(CLASS_NAME, "Using existing index file: " + faiFilePath);
+            indexFile = new File(fastaFilePath + ".faidx");
+            if (!indexFile.exists() || HelperFunctions.isOlder(indexFile, fastaFile)) {
+                Logger.info(CLASS_NAME, "Generating/Updating index file: " + indexFile.getPath());
+                generateIndexFile(fastaFile, indexFile);
+            } else {
+                Logger.info(CLASS_NAME, "Using existing index file: " + indexFile.getPath());
+            }
         }
 
         // sort this.index by entry.seqId
