@@ -26,7 +26,8 @@ import java.util.Locale;
                 KCFToPed.class,
                 ScoreRecalc.class,
                 KCFToGenotypeTable.class,
-                UniqueKmerDensity.class
+                UniqueKmerDensity.class,
+                HaploBin.class
         })
 public class KCFTOOLS {
     public static void main(String[] args) {
